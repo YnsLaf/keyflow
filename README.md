@@ -53,6 +53,18 @@ Auf dem Mac heißen die Befehle ohne Umgebung `python3` und `pip3`. Wenn beim
 ersten `python3` ein Fenster die „Befehlszeilenentwickler-Tools“ installieren
 will, bestätige das und starte die Befehle danach noch einmal.
 
+### Mit einem Befehl starten (macOS/Linux)
+
+Damit sich der Trainer öffnet, sobald du `trainer` eingibst, egal in welchem
+Ordner:
+
+```bash
+echo 'alias trainer="$HOME/tipptrainer/.venv/bin/python $HOME/tipptrainer/start.py"' >> ~/.zshrc && source ~/.zshrc
+```
+
+Das setzt voraus, dass der Ordner unter `~/tipptrainer` liegt und `.venv`
+angelegt ist. Mit bash statt zsh nimm `~/.bashrc` statt `~/.zshrc`.
+
 ### Windows
 
 ```bat
