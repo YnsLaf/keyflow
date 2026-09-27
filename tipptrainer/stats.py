@@ -2,8 +2,8 @@
 
 from datetime import date, timedelta
 
-MODE_ORDER = ("zeit", "woerter", "frei", "saetze", "zahlen", "zeichen",
-              "gemischt", "zitat", "schwaechen", "eigener")
+MODE_ORDER = ("zeit", "woerter", "frei", "unendlich", "geschichte", "saetze", "zahlen",
+              "zeichen", "gemischt", "zitat", "schwaechen", "eigener")
 
 
 def entry_date(entry):
@@ -45,6 +45,12 @@ def streaks(days, today):
     return current, longest
 
 
+def record_value(entry):
+    """Womit Rekorde verglichen werden: im Unendlich-Modus die geschafften
+    Wörter, sonst das Tempo."""
+    return entry.get("score", entry["wpm"])
+
+
 def record_eligible(entry):
     # Ein paar Sekunden im freien Modus sollen keinen Rekord ergeben.
     return not (entry["mode"].startswith("frei") and entry.get("duration", 0) < 30)
@@ -56,13 +62,13 @@ def records(history):
         if not record_eligible(e):
             continue
         cur = best.get(e["mode"])
-        if cur is None or e["wpm"] > cur["wpm"]:
+        if cur is None or record_value(e) > record_value(cur):
             best[e["mode"]] = e
     return best
 
 
 def best_entry(history):
-    eligible = [e for e in history if record_eligible(e)]
+    eligible = [e for e in history if record_eligible(e) and "score" not in e]
     return max(eligible, key=lambda e: e["wpm"]) if eligible else None
 
 
@@ -124,6 +130,11 @@ ACHIEVEMENTS = (
     ("zitate", "Belesen", "Tippe 10 Zitate."),
     ("eigener", "Eigene Worte", "Tippe einen eigenen Text."),
     ("zweisprachig", "Zweisprachig", "Übe auf Deutsch und auf Englisch."),
+    ("unendlich50", "Durchhalter", "Schaffe 50 Wörter im Unendlich-Modus."),
+    ("unendlich150", "Unaufhaltsam", "Schaffe 150 Wörter im Unendlich-Modus."),
+    ("geschichten10", "Geschichtenerzähler", "Tippe 10 verschiedene Geschichten."),
+    ("geschichten40", "Bücherwurm", "Tippe alle 40 Geschichten."),
+    ("extrem", "Extremist", "Tippe eine extreme Geschichte mit mind. 95 % Genauigkeit."),
     ("eule", "Nachteule", "Übe zwischen 0 und 4 Uhr nachts."),
     ("frueh", "Früher Vogel", "Übe zwischen 4 und 7 Uhr morgens."),
 )
@@ -180,6 +191,19 @@ def achieved(history, goal_minutes, today):
             got.add("eule")
         elif hour < 7:
             got.add("frueh")
+    best_endless = max((e.get("score", 0) for e in history if e["mode"].startswith("unendlich")),
+                       default=0)
+    if best_endless >= 50:
+        got.add("unendlich50")
+    if best_endless >= 150:
+        got.add("unendlich150")
+    stories = {e["story"] for e in history if e.get("story")}
+    if len(stories) >= 10:
+        got.add("geschichten10")
+    if len(stories) >= 40:
+        got.add("geschichten40")
+    if any(e.get("story", "").startswith("extreme") and e["acc"] >= 95 for e in history):
+        got.add("extrem")
     if sum(1 for e in history if e["mode"].startswith("zitat")) >= 10:
         got.add("zitate")
     if {"de", "en"} <= {e.get("lang") for e in history}:

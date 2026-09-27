@@ -38,6 +38,8 @@ HIDE_CURSOR = "\x1b[?25l"
 SHOW_CURSOR = "\x1b[?25h"
 ALT_SCREEN_ON = "\x1b[?1049h"
 ALT_SCREEN_OFF = "\x1b[?1049l"
+# Bildschirm und Scrollback leeren, Cursor nach oben links
+WIPE = "\x1b[2J\x1b[3J\x1b[H"
 
 _CSI_KEYS = {
     b"A": UP, b"B": DOWN, b"C": RIGHT, b"D": LEFT, b"3~": DELETE,
@@ -80,11 +82,11 @@ class Terminal:
             if erase:
                 self._erase = erase
             tty.setcbreak(self.fd)
-        self.write(ALT_SCREEN_ON + HIDE_CURSOR + CLEAR + HOME)
+        self.write(WIPE + ALT_SCREEN_ON + HIDE_CURSOR + CLEAR + HOME)
         return self
 
     def __exit__(self, *exc):
-        self.write(colorama.Style.RESET_ALL + SHOW_CURSOR + ALT_SCREEN_OFF)
+        self.write(colorama.Style.RESET_ALL + SHOW_CURSOR + ALT_SCREEN_OFF + WIPE)
         if self._saved is not None:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self._saved)
         return False

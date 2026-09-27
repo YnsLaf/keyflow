@@ -209,7 +209,7 @@ def frame(term, lines, footer="", width=72):
     top = [""] if rows > 26 else []
     body = top + [margin + line for line in lines]
     if footer:
-        body = body[:rows - 3]
+        body = body[:rows - 2]
         while len(body) < rows - 2:
             body.append("")
         body.append(margin + DIM + footer + RESET)

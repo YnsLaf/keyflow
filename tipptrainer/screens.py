@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 from colorama import Back, Fore
 
-from . import stats, storage
+from . import stats, storage, stories
 from . import terminal as T
 from .ui import (ACCENT, BAD, BRIGHT, DIM, GOLD, GOOD, RESET, REVERSE, TEXT,
                  UNDERLINE, WARN, Item, acc_color, confirm, bar_chart, big_number,
@@ -32,7 +32,11 @@ MAIN_ITEMS = (
     ("words", "Wörter-Test", lambda v: "%d Wörter" % v,
      "Eine feste Anzahl Wörter – so schnell und genau wie möglich."),
     ("free", "Freier Modus", FREE_LABELS,
-     "Ohne Limit: tippe endlos weiter. Esc beendet und speichert."),
+     "Ohne Limit und ohne Druck: tippe endlos weiter. Esc beendet und speichert."),
+    ("endless", "Unendlich-Modus", lambda v: "ab Level %d" % v,
+     "Die Zeit läuft ab – jedes richtige Wort bringt Sekunden. Wie weit kommst du?"),
+    ("stories", "Geschichten", lambda v: "%s (10)" % stories.LEVEL_LABELS[v],
+     "40 Geschichten: einfach, mittel, schwer, extrem. Enter öffnet die Liste."),
     ("sentences", "Sätze", lambda v: "1 Satz" if v == 1 else "%d Sätze" % v,
      "Automatisch erzeugte Sätze mit Groß-/Kleinschreibung und Satzzeichen."),
     ("numbers", "Zahlen", lambda v: "%d Zahlen" % v,
@@ -57,7 +61,7 @@ def main_header(store, width):
     best = stats.best_entry(store.history)
     mode = store.settings["color_mode"]
 
-    title = BRIGHT + ACCENT + "T I P P T R A I N E R" + RESET
+    title = BRIGHT + ACCENT + "T I P P T R A I N E R" + RESET + DIM + "  made by yns.laf" + RESET
     info = "Serie %s%d %s%s" % (GOLD if current else DIM, current,
                                  "Tag" if current == 1 else "Tage", RESET)
     if best:
@@ -93,7 +97,6 @@ def main_menu(term, store, index=0):
     items += [
         Item("Eigener Text", action="custom", right="%d gespeichert" % len(store.custom_texts),
              hint="Eigene Texte einfügen oder aus einer Datei laden."),
-        Item.sep(),
         Item("Statistik & Rekorde", action="stats",
              hint="Bestwerte, Verlauf, Durchschnitt und deine schwächsten Tasten."),
         Item("Aktivität", action="activity",
@@ -154,7 +157,13 @@ def draw_test(term, test, now, mode, settings, note=""):
 
     # Kopfzeile mit Zeit und Werten
     elapsed = test.elapsed(now)
-    if mode.kind == "time":
+    state = getattr(mode, "state", None)
+    if mode.kind == "endless":
+        remaining = max(0.0, state["budget"] - elapsed)
+        color = GOOD if remaining > 6 else WARN if remaining > 3 else BAD
+        clock = (color + BRIGHT + "%s s " % fmt_num(remaining, 1) + RESET
+                 + progress_bar(remaining / 20.0, 16, color))
+    elif mode.kind == "time":
         remaining = max(0, mode.limit - elapsed)
         clock = "%d" % (remaining + 0.999) if test.started else "%d" % mode.limit
     else:
@@ -172,9 +181,12 @@ def draw_test(term, test, now, mode, settings, note=""):
             parts.append(DIM + "Fortschritt %d %%" % (100 * test.pos // max(1, len(test.target))) + RESET)
     elif mode.kind == "free":
         parts.append(DIM + "%d Wörter" % test.words_done() + RESET)
+    elif mode.kind == "endless":
+        parts.append(ACCENT + BRIGHT + "Level %d" % state["level"] + RESET)
+        parts.append(BRIGHT + "%d" % state["words"] + RESET + DIM + " Wörter" + RESET)
     stat_line = (DIM + "  ·  " + RESET).join(parts)
     if not test.started:
-        stat_line += DIM + "   Los geht's – fang einfach an zu tippen." + RESET
+        stat_line += DIM + "   Tipp einfach los." + RESET
 
     label_line = DIM + mode.label + RESET
     if settings["strict"]:
@@ -182,6 +194,8 @@ def draw_test(term, test, now, mode, settings, note=""):
 
     if mode.kind == "free":
         footer = "Esc beenden & speichern · Tab neuer Text"
+    elif mode.kind == "endless":
+        footer = "Richtige Wörter bringen Zeit, Fehler kosten 1 s · Esc aufgeben · Tab neu"
     else:
         footer = "Tab neu starten · Esc Menü"
 
@@ -198,6 +212,12 @@ def draw_test(term, test, now, mode, settings, note=""):
 
 
 # --- Ergebnis -----------------------------------------------------------------
+
+def record_text(entry):
+    if "score" in entry:
+        return "%d Wörter" % entry["score"]
+    return "%d WPM" % round(entry["wpm"])
+
 
 def result_lines(mode, result, info, store, width):
     wpm_rows = big_number(result["wpm"])
@@ -220,6 +240,11 @@ def result_lines(mode, result, info, store, width):
         "Zeit " + BRIGHT + fmt_num(result["duration"], 1) + " s" + RESET,
     ]
     lines.append((DIM + "  ·  " + RESET).join(details))
+    entry = info.get("entry") or {}
+    if mode.kind == "endless" and "score" in entry:
+        lines.append("Geschafft " + GOLD + "%d Wörter" % entry["score"] + RESET + DIM + "  ·  " + RESET
+                     + "erreicht " + ACCENT + BRIGHT + "Level %d" % entry["level"] + RESET
+                     + DIM + "  ·  " + RESET + "überlebt " + BRIGHT + fmt_clock(result["duration"]) + RESET)
 
     series = result["wpm_series"]
     if len(series) >= 3:
@@ -234,11 +259,11 @@ def result_lines(mode, result, info, store, width):
     else:
         prev = info.get("previous")
         if info.get("record") and prev:
-            lines.append(GOLD + "★ NEUER REKORD! " + RESET + DIM + "(vorher %d WPM)" % round(prev["wpm"]) + RESET)
+            lines.append(GOLD + "★ NEUER REKORD! " + RESET + DIM + "(vorher %s)" % record_text(prev) + RESET)
         elif info.get("record"):
             lines.append(GOLD + "★ Erster Eintrag in diesem Modus – das ist dein Rekord." + RESET)
         elif prev:
-            lines.append(DIM + "Rekord in diesem Modus: %d WPM" % round(prev["wpm"]) + RESET)
+            lines.append(DIM + "Rekord in diesem Modus: %s" % record_text(prev) + RESET)
         for key in info.get("achievements", []):
             lines.append(GOLD + "✓ Erfolg freigeschaltet: " + RESET + BRIGHT
                          + stats.ACHIEVEMENT_NAMES.get(key, key) + RESET)
@@ -325,11 +350,11 @@ def records_lines(store, width):
     if not best:
         return [DIM + "Noch keine Rekorde." + RESET]
     label_w = min(40, max(vlen(e.get("label", k)) for k, e in best.items()) + 2)
-    lines = [DIM + pad("Modus", label_w) + pad("WPM", 8) + pad("Genauigkeit", 14) + "Datum" + RESET]
+    lines = [DIM + pad("Modus", label_w) + pad("Rekord", 12) + pad("Genauigkeit", 14) + "Datum" + RESET]
     for key in sorted(best, key=stats.mode_sort_key):
         e = best[key]
         lines.append(pad(e.get("label", key)[:label_w - 1], label_w)
-                     + BRIGHT + ACCENT + pad("%d" % round(e["wpm"]), 8) + RESET
+                     + BRIGHT + ACCENT + pad(record_text(e), 12) + RESET
                      + acc_color(e["acc"]) + pad("%s %%" % fmt_num(e["acc"], 1), 14) + RESET
                      + DIM + fmt_date(stats.entry_date(e)) + RESET)
     return lines
@@ -656,6 +681,30 @@ def settings_screen(term, store):
                 store.reset_stats()
             continue
         return
+
+
+# --- Geschichten ----------------------------------------------------------------
+
+def stories_menu(term, store, level, index=0):
+    best = {}
+    for e in store.history:
+        sid = e.get("story")
+        if sid and e["wpm"] > best.get(sid, 0):
+            best[sid] = e["wpm"]
+    items = []
+    for i, (title, text) in enumerate(stories.STORIES[level]):
+        sid = stories.story_id(level, i)
+        mark = (GOOD + "✓ " + RESET + DIM + "%d WPM · " % round(best[sid])) if sid in best else DIM + "neu · "
+        items.append(Item("%2d. %s" % (i + 1, title), action=i,
+                          right=mark + "%d Zeichen" % len(text) + RESET,
+                          hint=text[:66] + " …"))
+    items += [Item.sep(), Item("Zurück", action="back")]
+    done = sum(1 for i in range(len(stories.STORIES[level])) if stories.story_id(level, i) in best)
+    width = content_width(term)
+    header = title_block("Geschichten – %s" % stories.LEVEL_LABELS[level],
+                         "%d von %d geschafft · auf Deutsch" % (done, len(stories.STORIES[level])), width)
+    return run_menu(term, header, items, index,
+                    footer="↑↓ auswählen · Enter tippen · Esc zurück", width=width)
 
 
 # --- Eigene Texte -------------------------------------------------------------

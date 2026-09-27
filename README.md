@@ -1,16 +1,20 @@
 # Tipptrainer
 
+*made by yns.laf*
+
 Ein Tipptrainer fürs Terminal, geschrieben in Python mit
 [colorama](https://pypi.org/project/colorama/). Er läuft unter Windows, Linux
 und macOS.
 
 ```
-T I P P T R A I N E R                          Serie 4 Tage  ·  Bestwert 85 WPM
+T I P P T R A I N E R  made by yns.laf          Serie 4 Tage  ·  Bestwert 85 WPM
 Heute 6,5/15 min ████░░░░░░░░          14 Tage ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■
 ────────────────────────────────────────────────────────────────────────
 ▶ Zeit-Test               ◀ 30 s ▶
   Wörter-Test               25 Wörter
   Freier Modus              Wörter
+  Unendlich-Modus           ab Level 1
+  Geschichten               einfach (10)
   Sätze                     3 Sätze
   Zahlen                    25 Zahlen
   Sonderzeichen             25 Gruppen
@@ -18,10 +22,9 @@ Heute 6,5/15 min ████░░░░░░░░          14 Tage ■ ■ �
   Zitate & Sprichwörter     zufällig
   Schwächen-Training        25 Wörter
   Eigener Text              2 gespeichert
-  ············
   Statistik & Rekorde
   Aktivität
-  Erfolge                   8/24
+  Erfolge                   8/29
   Einstellungen
   Beenden
 ```
@@ -83,7 +86,8 @@ Am besten funktioniert das *Windows Terminal*.
 Bei aktiver Umgebung installiert `pip install .` den Befehl `tipptrainer`.
 Er funktioniert, solange die Umgebung aktiv ist.
 
-Das Terminalfenster sollte mindestens 80 × 24 Zeichen groß sein.
+Das Terminalfenster sollte mindestens 80 × 24 Zeichen groß sein. Beim Starten und
+Beenden wird das Terminal komplett geleert.
 
 ## Modi
 
@@ -92,6 +96,8 @@ Das Terminalfenster sollte mindestens 80 × 24 Zeichen groß sein.
 | **Zeit-Test** | Du tippst so viele Wörter wie möglich in 15, 30, 60 oder 120 Sekunden. |
 | **Wörter-Test** | Du tippst 10, 25, 50 oder 100 Wörter so schnell wie möglich. |
 | **Freier Modus** | Kein Limit, der Text geht immer weiter. Esc beendet den Test und speichert ihn. Als Text gibt es Wörter, Sätze, Zahlen, Sonderzeichen oder alles gemischt. |
+| **Unendlich-Modus** | Überlebensmodus: Du startest mit 10 Sekunden. Jedes richtig getippte Wort bringt Zeit, jeder Fehler kostet 1 Sekunde. Alle 20 Wörter steigt das Level: Die Wörter werden länger, dann kommen Satzzeichen, Zahlen und Sonderzeichen dazu, und pro Wort gibt es weniger Zeit. Du kannst ab Level 1, 3 oder 5 starten. Rekord ist die Zahl der geschafften Wörter. |
+| **Geschichten** | 40 Geschichten auf Deutsch: 10 einfache, 10 mittlere, 10 schwere und 10 extreme. Einfach heißt kurze Sätze und bekannte Wörter. Extrem heißt lange Texte voller Zahlen, Einheiten, Klammern, Paragrafen und Fachwörter. Die Liste zeigt, welche du schon geschafft hast und mit welchem Tempo. Nach einer Geschichte geht es mit Enter direkt zur nächsten. |
 | **Sätze** | Automatisch erzeugte, grammatisch richtige Sätze auf Deutsch oder Englisch. |
 | **Zahlen** | Preise, Uhrzeiten, Datumsangaben, Rechnungen, Einheiten und Telefonnummern. |
 | **Sonderzeichen** | Klammern, Operatoren, Pfade, E-Mail-Adressen und Code-Schnipsel. |
@@ -109,7 +115,7 @@ Im Hauptmenü wählst du Länge oder Variante direkt mit **← →** aus.
 | Rücktaste | letztes Zeichen löschen |
 | Strg + Rücktaste (macOS: Option + Rücktaste) | ganzes Wort löschen |
 | Tab | Test mit neuem Text neu starten |
-| Esc | zurück ins Menü (im freien Modus: beenden und speichern) |
+| Esc | zurück ins Menü (im freien und im Unendlich-Modus: beenden und speichern) |
 
 ## Statistik, Rekorde und Aktivität
 
@@ -134,8 +140,8 @@ Im Hauptmenü wählst du Länge oder Variante direkt mit **← →** aus.
   - Dazu kommen aktuelle und längste Serie, aktive Tage und die Übungszeit.
   - Mit ← → blätterst du in ältere Zeiträume.
 - **Tagesziel und Serie** stehen immer oben im Hauptmenü.
-- **24 Erfolge** gibt es, z. B. für 50/70/90/110 WPM, fehlerfreie Tests,
-  7 Tage am Stück oder 10 Minuten im freien Modus.
+- **29 Erfolge** gibt es, z. B. für 50/70/90/110 WPM, fehlerfreie Tests,
+  7 Tage am Stück, 150 Wörter im Unendlich-Modus oder alle 40 Geschichten.
 
 ```
      Nov     Dez       Jan     Feb     Mär       Apr     Mai     Jun       Jul
@@ -193,6 +199,7 @@ tipptrainer/
   engine.py    Tipp-Logik und Berechnungen (ohne Ein-/Ausgabe)
   textgen.py   Textgenerator: Wörter, Sätze, Zahlen, Sonderzeichen, Zitate
   words.py     Wortlisten, Satzbausteine, Zitate
+  stories.py   die 40 Geschichten
   stats.py     Rekorde, Serien, schwache Tasten, Erfolge
   storage.py   Einstellungen und Verlauf als JSON
   screens.py   alle Bildschirme
