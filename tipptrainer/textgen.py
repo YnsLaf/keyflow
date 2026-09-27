@@ -301,6 +301,29 @@ class MixedSource(Source):
         return word
 
 
+class EndlessSource(Source):
+    """Text für den Unendlich-Modus: wird mit jedem Level schwieriger."""
+
+    chunk_size = 4
+
+    def __init__(self, lang="de", rng=None):
+        super().__init__(rng)
+        self.level = 1
+        self.easy = WordSource(lang, "easy", rng=self.rng)
+        self.normal = WordSource(lang, "normal", rng=self.rng)
+        self.hard = WordSource(lang, "hard", punctuation=True, rng=self.rng)
+        self.mixed = MixedSource(lang, "normal", rng=self.rng)
+
+    def token(self):
+        if self.level <= 2:
+            return self.easy.token()
+        if self.level <= 4:
+            return self.normal.token()
+        if self.level <= 6:
+            return self.hard.token()
+        return self.mixed.token()
+
+
 class WeakSource(Source):
     """Bevorzugt Wörter, die deine schwächsten Tasten enthalten."""
 

@@ -7,21 +7,34 @@ import time
 from datetime import date, datetime
 from pathlib import Path
 
-from . import screens, stats, textgen, ui
+from . import screens, stats, stories, textgen, ui
 from . import terminal as T
 from .engine import TypingTest
 from .storage import Store
 
 
+ENDLESS_START = 10.0         # Startzeit im Unendlich-Modus (Sekunden)
+ENDLESS_MAX = 20.0           # mehr Zeitvorrat als das gibt es nicht
+ENDLESS_PENALTY = 1.0        # Sekunden Abzug pro Tippfehler
+ENDLESS_WORDS_PER_LEVEL = 20
+
+
+def endless_target_wpm(level):
+    """Tempo, mit dem man im jeweiligen Level genau gleich viel Zeit gewinnt, wie
+    man verbraucht. Wer schneller tippt, baut Vorrat auf."""
+    return 25 + 5 * level
+
+
 class Mode:
     """Beschreibt einen Test.
 
-    kind:  "time" (Zeitlimit), "text" (fester Text) oder "free" (endlos).
+    kind:  "time" (Zeitlimit), "text" (fester Text), "free" (endlos) oder
+           "endless" (Unendlich-Modus: Zeit läuft ab, richtige Wörter bringen Zeit).
     source: liefert bei "time"/"free" immer neue Textstücke.
     make_text: liefert bei "text" (text, hinweis)."""
 
     def __init__(self, key, label, kind, limit=0, source=None, make_text=None,
-                 on_complete=None, repeatable=True, count_words=False):
+                 on_complete=None, repeatable=True, count_words=False, extra=None):
         self.key = key
         self.label = label
         self.kind = kind
@@ -31,6 +44,8 @@ class Mode:
         self.on_complete = on_complete
         self.repeatable = repeatable and kind == "text"
         self.count_words = count_words
+        self.extra = extra          # () -> zusätzliche Felder für den Verlauf
+        self.state = None           # Laufzeitwerte des Unendlich-Modus
 
 
 class App:
@@ -59,6 +74,8 @@ class App:
                 screens.settings_screen(self.term, self.store)
             elif action == "custom":
                 self.custom_texts()
+            elif action == "stories":
+                self.stories_menu()
             else:
                 self.run_mode(self.build_mode(action))
 
@@ -120,6 +137,12 @@ class App:
             return Mode("frei-%s-%s" % (value, variant),
                         "Freier Modus · %s · %s" % (screens.FREE_LABELS[value], label),
                         "free", source=self._free_source(value))
+        if action == "endless":
+            source = textgen.EndlessSource(lang, rng=self.rng)
+            mode = Mode("unendlich-%d-%s" % (value, lang), "Unendlich ab Level %d · %s" % (value, up),
+                        "endless", limit=value, source=source)
+            mode.extra = lambda: {"score": mode.state["words"], "level": mode.state["level"]}
+            return mode
         if action == "sentences":
             return Mode("saetze-%d-%s" % (value, lang), "%s · %s" % (
                 "1 Satz" if value == 1 else "%d Sätze" % value, up), "text",
@@ -169,7 +192,7 @@ class App:
             result = test.result()
             info = self.save_result(mode, result)
             if info["saved"] and mode.on_complete and test.complete():
-                mode.on_complete()
+                mode.on_complete(result)
             choice = screens.result_screen(self.term, mode, result, info, self.store)
             if choice == "menu":
                 return
@@ -178,11 +201,15 @@ class App:
 
     def run_test(self, mode, text, note):
         settings = self.settings
+        endless = mode.kind == "endless"
+        if endless:
+            mode.state = {"budget": ENDLESS_START, "level": mode.limit, "words": 0, "credited": set()}
+            mode.source.level = mode.limit
         if mode.kind == "text":
             target = text
         else:
             target = self._next_chunk(mode)
-            while len(target) < 400:
+            while len(target) < (150 if endless else 400):
                 target += " " + self._next_chunk(mode)
         test = TypingTest(target, strict=settings["strict"])
         self.term.flush_input()
@@ -193,7 +220,10 @@ class App:
                 if mode.kind == "time" and test.elapsed(now) >= mode.limit:
                     test.finish(test.start_time + mode.limit)
                     return "done", test
-            if mode.kind != "text" and len(test.target) - test.pos < 250:
+                if endless and test.elapsed(now) >= mode.state["budget"]:
+                    test.finish(test.start_time + max(0.0, mode.state["budget"]))
+                    return "done", test
+            if mode.kind != "text" and len(test.target) - test.pos < (120 if endless else 250):
                 test.extend(" " + self._next_chunk(mode))
             screens.draw_test(self.term, test, now, mode, settings, note)
 
@@ -201,7 +231,7 @@ class App:
             if key is None:
                 continue
             if key in (T.ESC, T.CTRL_C):
-                if mode.kind == "free" and test.pos > 0:
+                if mode.kind in ("free", "endless") and test.pos > 0:
                     test.finish(time.monotonic())
                     return "done", test
                 return "abort", test
@@ -215,9 +245,32 @@ class App:
                 ok = test.type_char(key, time.monotonic())
                 if ok is False and settings["bell"]:
                     self.term.bell()
+                if endless and ok is not None:
+                    self._endless_step(mode, test, ok)
                 if mode.kind == "text" and test.complete():
                     test.finish(time.monotonic())
                     return "done", test
+
+    def _endless_step(self, mode, test, ok):
+        """Unendlich-Modus: Fehler kosten Zeit, fertige Wörter bringen Zeit."""
+        state = mode.state
+        now_elapsed = test.elapsed(time.monotonic())
+        if not ok:
+            state["budget"] -= ENDLESS_PENALTY
+            return
+        end = test.pos - 1
+        if test.target[end] != " " or end in state["credited"]:
+            return
+        start = test.target.rfind(" ", 0, end) + 1
+        if not all(test.marks[start:end + 1]):
+            return
+        state["credited"].add(end)
+        state["words"] += 1
+        seconds_per_char = 60.0 / (5 * endless_target_wpm(state["level"]))
+        state["budget"] = min(state["budget"] + (end + 1 - start) * seconds_per_char,
+                              now_elapsed + ENDLESS_MAX)
+        state["level"] = mode.limit + state["words"] // ENDLESS_WORDS_PER_LEVEL
+        mode.source.level = state["level"]
 
     def _next_chunk(self, mode):
         return textgen.finalize(mode.source.chunk(), self.settings)
@@ -238,11 +291,15 @@ class App:
             "errors": result["errors"],
             "consistency": result["consistency"],
         }
+        if mode.extra:
+            entry.update(mode.extra())
         previous = stats.records(self.store.history).get(mode.key)
-        record = stats.record_eligible(entry) and (previous is None or entry["wpm"] > previous["wpm"])
+        record = stats.record_eligible(entry) and (
+            previous is None or stats.record_value(entry) > stats.record_value(previous))
         self.store.add_result(entry, result["key_attempts"], result["key_errors"])
         new = self.update_achievements()
-        return {"saved": True, "record": record, "previous": previous, "achievements": new}
+        return {"saved": True, "record": record, "previous": previous, "achievements": new,
+                "entry": entry}
 
     def update_achievements(self):
         got = stats.achieved(self.store.history, self.settings["daily_goal"], date.today())
@@ -254,6 +311,35 @@ class App:
                 self.store.achievements[key] = stamp
             self.store.save()
         return new
+
+    # --- Geschichten ------------------------------------------------------
+    def stories_menu(self):
+        level = self.settings["menu"]["stories"]
+        index = 0
+        while True:
+            action, index, _ = screens.stories_menu(self.term, self.store, level, index)
+            if action is None or action == "back":
+                return
+            self.run_mode(self._story_mode(level, action))
+
+    def _story_mode(self, level, first):
+        items = stories.STORIES[level]
+        label = stories.LEVEL_LABELS[level]
+        state = {"i": first, "shown": first}
+
+        def make_text():
+            state["shown"] = state["i"]
+            title, text = items[state["i"]]
+            return text, "„%s“ · Geschichte %d/%d (%s)" % (title, state["i"] + 1, len(items), label)
+
+        def on_complete(result):
+            state["i"] = (state["shown"] + 1) % len(items)
+
+        mode = Mode("geschichte-%s" % level, "Geschichte (%s)" % label, "text",
+                    make_text=make_text, on_complete=on_complete)
+        mode.extra = lambda: {"story": stories.story_id(level, state["shown"]), "lang": "de",
+                              "label": "Geschichte (%s) · %s" % (label, items[state["shown"]][0])}
+        return mode
 
     # --- Eigene Texte ----------------------------------------------------
     def custom_texts(self):
@@ -290,7 +376,7 @@ class App:
                     100 * start // len(entry["text"]), 100 * end // len(entry["text"]))
             return entry["text"][start:end].strip(), note
 
-        def on_complete():
+        def on_complete(result):
             end = state.get("end", 0)
             entry["pos"] = 0 if end >= len(entry["text"]) else end
             self.store.save()
