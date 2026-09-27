@@ -1,6 +1,6 @@
 import unittest
 
-from tipptrainer.engine import TypingTest, wrap
+from keyflow.engine import TypingTest, wrap
 
 
 class WrapTest(unittest.TestCase):

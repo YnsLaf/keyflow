@@ -3,8 +3,8 @@ import unittest
 from datetime import date
 from pathlib import Path
 
-from tipptrainer import stats
-from tipptrainer.storage import Store
+from keyflow import stats
+from keyflow.storage import Store
 
 
 def entry(ts, mode="zeit-30-de", wpm=50.0, acc=95.0, duration=30.0, chars=250, lang="de"):

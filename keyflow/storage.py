@@ -69,8 +69,17 @@ MENU_DEFAULTS = {
 
 
 def default_path():
-    base = os.environ.get("TIPPTRAINER_HOME")
-    folder = Path(base) if base else Path.home() / ".tipptrainer"
+    base = os.environ.get("KEYFLOW_HOME") or os.environ.get("TIPPTRAINER_HOME")
+    if base:
+        return Path(base) / "daten.json"
+    folder = Path.home() / ".keyflow"
+    old = Path.home() / ".tipptrainer"
+    # Daten aus der Zeit vor der Umbenennung übernehmen
+    if not folder.exists() and old.is_dir():
+        try:
+            os.rename(old, folder)
+        except OSError:
+            return old / "daten.json"
     return folder / "daten.json"
 
 
