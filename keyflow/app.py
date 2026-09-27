@@ -441,10 +441,10 @@ class App:
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog="tipptrainer",
-                                     description="Tipptrainer für das Terminal.")
+    parser = argparse.ArgumentParser(prog="keyflow",
+                                     description="Keyflow – Tipptrainer für das Terminal.")
     parser.add_argument("--daten", metavar="DATEI",
-                        help="eigene Datendatei verwenden (Standard: ~/.tipptrainer/daten.json)")
+                        help="eigene Datendatei verwenden (Standard: ~/.keyflow/daten.json)")
     args = parser.parse_args(argv)
 
     store = Store(args.daten)

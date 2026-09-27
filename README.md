@@ -1,13 +1,13 @@
-# Tipptrainer
+# Keyflow
 
 *made by yns.laf*
 
-Ein Tipptrainer fürs Terminal, geschrieben in Python mit
+Keyflow ist ein Tipptrainer fürs Terminal, geschrieben in Python mit
 [colorama](https://pypi.org/project/colorama/). Er läuft unter Windows, Linux
 und macOS.
 
 ```
-T I P P T R A I N E R  made by yns.laf          Serie 4 Tage  ·  Bestwert 85 WPM
+K E Y F L O W  made by yns.laf                  Serie 4 Tage  ·  Bestwert 85 WPM
 Heute 6,5/15 min ████░░░░░░░░          14 Tage ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■
 ────────────────────────────────────────────────────────────────────────
 ▶ Zeit-Test               ◀ 30 s ▶
@@ -83,7 +83,7 @@ Am besten funktioniert das *Windows Terminal*.
 
 ### Als Befehl installieren
 
-Bei aktiver Umgebung installiert `pip install .` den Befehl `tipptrainer`.
+Bei aktiver Umgebung installiert `pip install .` den Befehl `keyflow`.
 Er funktioniert, solange die Umgebung aktiv ist.
 
 Das Terminalfenster sollte mindestens 80 × 24 Zeichen groß sein. Beim Starten und
@@ -171,9 +171,10 @@ Im Hauptmenü wählst du Länge oder Variante direkt mit **← →** aus.
 
 ## Wo werden die Daten gespeichert?
 
-Alles liegt in einer einzigen Datei: `~/.tipptrainer/daten.json`. Unter Windows
-ist das `C:\Users\<Name>\.tipptrainer\daten.json`. Mit `--daten PFAD` oder der
-Umgebungsvariable `TIPPTRAINER_HOME` kannst du einen anderen Ort wählen.
+Alles liegt in einer einzigen Datei: `~/.keyflow/daten.json`. Unter Windows
+ist das `C:\Users\<Name>\.keyflow\daten.json`. Mit `--daten PFAD` oder der
+Umgebungsvariable `KEYFLOW_HOME` kannst du einen anderen Ort wählen. Daten aus
+älteren Versionen (`~/.tipptrainer`) werden beim ersten Start automatisch übernommen.
 
 ## Wie wird gerechnet?
 
@@ -194,7 +195,7 @@ python -m unittest discover -s tests
 ## Aufbau
 
 ```
-tipptrainer/
+keyflow/
   app.py       Programmablauf, Modi, Speichern der Ergebnisse
   engine.py    Tipp-Logik und Berechnungen (ohne Ein-/Ausgabe)
   textgen.py   Textgenerator: Wörter, Sätze, Zahlen, Sonderzeichen, Zitate

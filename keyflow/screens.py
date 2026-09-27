@@ -61,7 +61,7 @@ def main_header(store, width):
     best = stats.best_entry(store.history)
     mode = store.settings["color_mode"]
 
-    title = BRIGHT + ACCENT + "T I P P T R A I N E R" + RESET + DIM + "  made by yns.laf" + RESET
+    title = BRIGHT + ACCENT + "K E Y F L O W" + RESET + DIM + "  made by yns.laf" + RESET
     info = "Serie %s%d %s%s" % (GOLD if current else DIM, current,
                                  "Tag" if current == 1 else "Tage", RESET)
     if best:

@@ -3,15 +3,15 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tipptrainer"
+name = "keyflow"
 version = "1.1.0"
-description = "Tipptrainer für das Terminal: WPM, freier Modus, Zahlen, Sonderzeichen, Rekorde und Aktivitätskalender"
+description = "Keyflow – Tipptrainer für das Terminal: WPM, freier Modus, Zahlen, Sonderzeichen, Rekorde und Aktivitätskalender"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = ["colorama>=0.4.6"]
 
 [project.scripts]
-tipptrainer = "tipptrainer.app:main"
+keyflow = "keyflow.app:main"
 
 [tool.setuptools]
-packages = ["tipptrainer"]
+packages = ["keyflow"]

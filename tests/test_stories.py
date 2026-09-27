@@ -1,6 +1,6 @@
 import unittest
 
-from tipptrainer import stories, textgen
+from keyflow import stories, textgen
 
 
 class StoriesTest(unittest.TestCase):

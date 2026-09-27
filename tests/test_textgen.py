@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from tipptrainer import textgen
+from keyflow import textgen
 
 
 class TextgenTest(unittest.TestCase):
