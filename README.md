@@ -30,20 +30,48 @@ Heute 6,5/15 min ████░░░░░░░░          14 Tage ■ ■ �
 
 Du brauchst Python 3.8 oder neuer.
 
+### macOS und Linux
+
 ```bash
+git clone https://github.com/YnsLaf/keyflow
+cd tipptrainer
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 python start.py
 ```
 
-Du kannst ihn auch als Befehl installieren:
+Beim nächsten Mal reicht:
 
 ```bash
-pip install .
-tipptrainer
+cd tipptrainer
+source .venv/bin/activate
+python start.py
 ```
 
-Das Terminalfenster sollte mindestens 80 × 24 Zeichen groß sein. Unter Windows
-funktioniert am besten das *Windows Terminal*.
+Auf dem Mac heißen die Befehle ohne Umgebung `python3` und `pip3`. Wenn beim
+ersten `python3` ein Fenster die „Befehlszeilenentwickler-Tools“ installieren
+will, bestätige das und starte die Befehle danach noch einmal.
+
+### Windows
+
+```bat
+git clone https://github.com/YnsLaf/keyflow
+cd tipptrainer
+py -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python start.py
+```
+
+Am besten funktioniert das *Windows Terminal*.
+
+### Als Befehl installieren
+
+Bei aktiver Umgebung installiert `pip install .` den Befehl `tipptrainer`.
+Er funktioniert, solange die Umgebung aktiv ist.
+
+Das Terminalfenster sollte mindestens 80 × 24 Zeichen groß sein.
 
 ## Modi
 
