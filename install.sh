@@ -5,6 +5,8 @@
 #   1. checks that Python 3.8+ is available
 #   2. installs pipx if it is missing (keeps KeyFlow in its own environment)
 #   3. installs KeyFlow from PyPI (package "keyflow-typing", command "keyflow")
+#
+# Usage:  curl -fsSL https://raw.githubusercontent.com/YnsLaf/keyflow/main/install.sh | sh
 set -e
 
 PACKAGE="keyflow-typing"
