@@ -26,6 +26,7 @@ SETTING_OPTIONS = {
     "animations": [True, False],
     "keyboard": [True, False],
     "check_updates": [True, False],
+    "command_setup": ["pending", "done"],   # intern: Befehl keyflow eingerichtet?
     "daily_goal": [5, 10, 15, 20, 30, 45, 60],
 }
 
@@ -50,6 +51,7 @@ DEFAULT_SETTINGS = {
     "animations": True,
     "keyboard": True,
     "check_updates": True,
+    "command_setup": "pending",
     "daily_goal": 15,
 }
 

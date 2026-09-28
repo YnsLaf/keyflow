@@ -48,8 +48,18 @@ pip install keyflow-typing
 keyflow
 ```
 
-On macOS the command is `pip3` (and `python3`). If `keyflow` is not found after
-`pip3 install --user keyflow-typing`, start it with `python3 -m keyflow`.
+On macOS the command is `pip3` (and `python3`):
+
+```bash
+pip3 install --user keyflow-typing
+python3 -m keyflow
+```
+
+pip often puts the `keyflow` command into a folder your terminal does not know.
+On its first start KeyFlow fixes that by itself: it adds a link to a folder that
+is already on your PATH (then `keyflow` works right away) or adds that folder to
+your `~/.zshrc` (then `keyflow` works in every new terminal window). After that,
+just type `keyflow`.
 
 On macOS, pipx is the cleanest way:
 
@@ -67,6 +77,17 @@ keyflow
 ```
 
 Windows Terminal works best.
+
+### Uninstalling
+
+```bash
+pip3 uninstall keyflow-typing      # or: pipx uninstall keyflow-typing
+rm -f "$(command -v keyflow)"      # removes the keyflow link, if one is left
+rm -rf ~/.keyflow                  # optional: your data
+```
+
+In the macOS Terminal you can also delete the "KeyFlow …" profiles under
+*Terminal → Settings → Profiles*.
 
 ### Updating
 

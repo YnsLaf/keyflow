@@ -8,7 +8,7 @@ import webbrowser
 from datetime import date, datetime
 from pathlib import Path
 
-from . import i18n, screens, stats, stories, textgen, ui, updates
+from . import command, i18n, screens, stats, stories, textgen, ui, updates
 from . import terminal as T
 from .engine import TypingTest
 from .i18n import tr
@@ -86,6 +86,7 @@ class App:
             ui.message(self.term, tr("Hinweis", "Note"), [
                 tr("Die Datei %s war beschädigt (%s) und wurde nach %s verschoben.",
                    "The file %s was damaged (%s) and was moved to %s.") % (path, error, backup)])
+        self.setup_command()
         self.update_achievements()
         self.updater = updates.UpdateChecker(enabled=self.settings["check_updates"])
         index = 0
@@ -102,6 +103,29 @@ class App:
                 self.info()
             else:
                 self.category(action)
+
+    def setup_command(self):
+        """Nach pip install --user: den Befehl keyflow einmalig einrichten."""
+        if self.settings["command_setup"] == "done" or updates.install_method() == "source":
+            return
+        result = command.setup()
+        self.settings["command_setup"] = "done"
+        self.store.save()
+        if result is None:
+            return
+        how, where = result
+        if how == "link":
+            lines = [tr("✓ Der Befehl keyflow ist eingerichtet (Verweis in %s).",
+                        "✓ The keyflow command is set up (link in %s).") % where,
+                     "", tr("Ab jetzt reicht im Terminal:", "From now on just type:"), "",
+                     "    " + ui.BRIGHT + "keyflow" + ui.RESET]
+        else:
+            lines = [tr("✓ Der Befehl keyflow wurde in %s eingetragen.",
+                        "✓ The keyflow command was added to %s.") % where,
+                     "", tr("Öffne ein neues Terminal-Fenster, dann reicht:",
+                            "Open a new terminal window, then just type:"), "",
+                     "    " + ui.BRIGHT + "keyflow" + ui.RESET]
+        ui.message(self.term, tr("Befehl eingerichtet", "Command set up"), lines)
 
     def info(self):
         index = 0
