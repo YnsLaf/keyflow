@@ -22,10 +22,14 @@ class KeyboardTest(unittest.TestCase):
             for row, fingers in zip(keyboard.ROWS[lang], keyboard.FINGERS[lang]):
                 self.assertEqual(len(row), len(fingers), row)
 
-    def test_layout_rows_have_equal_width(self):
+    def test_layout_keys_do_not_overlap(self):
         for lang in ("de", "en"):
-            widths = [sum(w + 1 for _, _, w in row) for row in keyboard.layout(lang)[:4]]
-            self.assertEqual(len(set(widths)), 1, (lang, widths))
+            for row in keyboard.layout(lang):
+                end = 0
+                for x, _, _, width in row:
+                    self.assertGreaterEqual(x, end, (lang, row))
+                    end = x + width
+                self.assertLessEqual(end, 45)
 
 
 class ColorTest(unittest.TestCase):

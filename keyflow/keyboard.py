@@ -121,27 +121,35 @@ def keys_for(ch, lang):
     return keys, hint
 
 
+PITCH = 3  # Abstand von Taste zu Taste in Zeichen
+
+
+def _cap(key):
+    return key.upper() if len(key.upper()) == 1 else key
+
+
 def layout(lang):
-    """Tastatur als Reihen von (beschriftung, tasten-id, breite). Tasten ohne
-    Beschriftung (Tab, Feststell, Enter, Rücktaste) halten nur den Versatz."""
+    """Tastatur als Reihen von (x, beschriftung, tasten-id, breite).
+
+    Gleichmäßiges Raster mit leichtem Versatz je Reihe wie auf einer echten
+    Tastatur; Umschalt links/rechts, darunter Leertaste mit ⌥ bzw. Alt/AltGr."""
     rows = ROWS[lang]
-
-    def keys(row):
-        return [((k.upper() if len(k.upper()) == 1 else k), k, 3) for k in row]
-
+    offsets = (3, 5, 6, 4) if lang == "de" else (3, 5, 6, 7)
+    out = []
+    for r, (row, off) in enumerate(zip(rows, offsets)):
+        cells = [(off + i * PITCH, _cap(k), k, 3) for i, k in enumerate(row)]
+        if r == 3:
+            cells.insert(0, (off - 4, "⇧", "shift_l", 3))
+            cells.append((off + len(row) * PITCH + 1, "⇧", "shift_r", 3))
+        out.append(cells)
+    # Leertaste: von C bis Komma, Modifikatoren links und rechts daneben
+    bottom = rows[3]
+    x_c = offsets[3] + bottom.index("c") * PITCH
+    x_comma = offsets[3] + bottom.index(",") * PITCH + PITCH
     mod_l, mod_r = ("⌥", "⌥") if MAC else ("Alt", "AltGr" if lang == "de" else "Alt")
-    if lang == "de":
-        return [
-            keys(rows[0]) + [("", "back", 5)],
-            [("", "tab", 5)] + keys(rows[1]) + [("", "enter", 3)],
-            [("", "caps", 6)] + keys(rows[2]) + [("", "enter", 2)],
-            [("⇧", "shift_l", 4)] + keys(rows[3]) + [("⇧", "shift_r", 8)],
-            [("", None, 7), (mod_l, "mod_l", 5), ("", " ", 29), (mod_r, "mod_r", 5)],
-        ]
-    return [
-        keys(rows[0]) + [("", "back", 5)],
-        [("", "tab", 5)] + keys(rows[1]),
-        [("", "caps", 6)] + keys(rows[2]) + [("", "enter", 6)],
-        [("⇧", "shift_l", 8)] + keys(rows[3]) + [("⇧", "shift_r", 8)],
-        [("", None, 7), (mod_l, "mod_l", 5), ("", " ", 29), (mod_r, "mod_r", 5)],
-    ]
+    out.append([
+        (x_c - 4, mod_l, "mod_l", 3),
+        (x_c, "", " ", x_comma - x_c),
+        (x_comma + 1, mod_r, "mod_r", max(3, len(mod_r))),
+    ])
+    return out
