@@ -161,6 +161,10 @@ class App:
         data = ui.confirm(self.term, tr("KeyFlow löschen", "Delete KeyFlow"),
                           tr("Auch deine Statistiken, Rekorde und Einstellungen löschen?",
                              "Also delete your statistics, records and settings?"))
+        if not data:
+            # a later reinstall has to set up the keyflow command again
+            self.settings["command_setup"] = "pending"
+            self.store.save()
         self.remove = {"data": data}
         return True
 
