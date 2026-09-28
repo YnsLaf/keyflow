@@ -21,9 +21,6 @@ class UpdatesTest(unittest.TestCase):
         self.assertFalse(checker.available)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class GlassProfileTest(unittest.TestCase):
     def test_profile_name_contains_opacity(self):
@@ -34,3 +31,7 @@ class GlassProfileTest(unittest.TestCase):
         self.assertTrue(macprofile._is_keyflow_profile("KeyFlow"))
         self.assertTrue(macprofile._is_keyflow_profile("KeyFlow 85"))
         self.assertFalse(macprofile._is_keyflow_profile("Basic"))
+
+
+if __name__ == "__main__":
+    unittest.main()
