@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "keyflow-typing"
-version = "1.4.1"
+version = "1.4.2"
 description = "KeyFlow – a typing trainer for the terminal (English & German): WPM tests, endless mode, 40 stories, on-screen keyboard, records and an activity calendar"
 readme = "README.md"
 requires-python = ">=3.8"
