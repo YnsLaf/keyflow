@@ -1,0 +1,43 @@
+# Veröffentlicht KeyFlow auf PyPI, sobald ein Release auf GitHub erstellt wird.
+# Einmalig nötig: auf pypi.org einen "Trusted Publisher" für dieses Repo eintragen
+# (Workflow: publish.yml, Environment: pypi). Ein API-Token ist nicht nötig.
+name: Auf PyPI veröffentlichen
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Tests
+        run: |
+          pip install colorama
+          python -m unittest discover -s tests
+      - name: Paket bauen
+        run: |
+          pip install build
+          python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

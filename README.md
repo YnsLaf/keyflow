@@ -39,9 +39,28 @@ den Unterseiten stellst du Länge oder Stufe mit ← → ein.
 weit du vom Tagesziel entfernt bist, und erinnert an deine Serie und deinen
 Rekord.
 
-## Starten
+## Installieren
 
 Du brauchst Python 3.8 oder neuer.
+
+```bash
+pip install keyflow-typing
+keyflow
+```
+
+Auf dem Mac geht es am saubersten mit [pipx](https://pipx.pypa.io). Das installiert
+KeyFlow in eine eigene Umgebung, und der Befehl `keyflow` funktioniert überall:
+
+```bash
+brew install pipx
+pipx ensurepath
+pipx install keyflow-typing
+keyflow
+```
+
+Aktualisieren kannst du mit `pip install -U keyflow-typing` bzw. `pipx upgrade keyflow-typing`.
+
+## Aus dem Quellcode starten
 
 ### macOS und Linux
 
@@ -256,3 +275,9 @@ keyflow/
   macprofile.py  transparenter Hintergrund im Mac-Terminal
   terminal.py  Tastatur-Eingabe für Windows, Linux und macOS
 ```
+
+## Neue Version veröffentlichen
+
+KeyFlow wird automatisch auf PyPI veröffentlicht, sobald auf GitHub ein Release
+erstellt wird (`.github/workflows/publish.yml`). Vorher die Versionsnummer in
+`pyproject.toml` und `keyflow/__init__.py` erhöhen.

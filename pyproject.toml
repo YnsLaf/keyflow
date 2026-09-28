@@ -3,12 +3,26 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "keyflow"
+name = "keyflow-typing"
 version = "1.3.0"
-description = "KeyFlow – Tipptrainer für das Terminal: WPM, freier Modus, Zahlen, Sonderzeichen, Rekorde und Aktivitätskalender"
+description = "KeyFlow – Tipptrainer fürs Terminal: WPM, Unendlich-Modus, 40 Geschichten, Tastatur-Anzeige, Rekorde und Aktivitätskalender"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = ["colorama>=0.4.6"]
+authors = [{ name = "yns.laf" }]
+keywords = ["typing", "tipptrainer", "wpm", "terminal", "tui", "keyboard", "zehnfingersystem"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: German",
+    "Operating System :: OS Independent",
+    "Topic :: Education",
+    "Topic :: Games/Entertainment",
+]
+
+[project.urls]
+Homepage = "https://github.com/YnsLaf/keyflow"
 
 [project.scripts]
 keyflow = "keyflow.app:main"
