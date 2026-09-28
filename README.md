@@ -118,7 +118,13 @@ Im Hauptmenü wählst du Länge oder Variante direkt mit **← →** aus.
   - Beim Beenden kommt dein eigener Hintergrund zurück.
   - Im Mac-Terminal passiert das über AppleScript. Beim ersten Start fragt macOS
     eventuell, ob das Terminal gesteuert werden darf.
-  - Die Deckkraft deines Profils bleibt erhalten.
+  - Das Mac-Terminal kann die Deckkraft nicht per Skript setzen. Bei „Glas“ lässt
+    Keyflow den Hintergrund dort deshalb unverändert. Stell die Werte einmal in
+    deinem Terminal-Profil ein, dann sieht jedes Fenster so aus:
+    *Terminal → Einstellungen → Profile → Fenster → Hintergrund → Farbe & Effekte*
+    → Farbton 0°, Sättigung 0 %, Helligkeit 10 %, Deckkraft 30 %.
+  - Andere Hintergründe machen das Fenster im Mac-Terminal undurchsichtig, solange
+    Keyflow läuft.
   - In anderen Terminals (iTerm2, Windows Terminal, die meisten Linux-Terminals)
     funktioniert es über eine Steuersequenz.
 - **Bewegte Farben:**
