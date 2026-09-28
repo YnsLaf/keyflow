@@ -24,6 +24,7 @@ SETTING_OPTIONS = {
     "background": ["glas", "mitternacht", "graphit", "ozean", "wald", "aubergine", "schwarz", "aus"],
     "animations": [True, False],
     "keyboard": [True, False],
+    "check_updates": [True, False],
     "daily_goal": [5, 10, 15, 20, 30, 45, 60],
 }
 
@@ -46,6 +47,7 @@ DEFAULT_SETTINGS = {
     "background": "glas",
     "animations": True,
     "keyboard": True,
+    "check_updates": True,
     "daily_goal": 15,
 }
 

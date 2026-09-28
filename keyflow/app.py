@@ -4,10 +4,11 @@ import argparse
 import random
 import sys
 import time
+import webbrowser
 from datetime import date, datetime
 from pathlib import Path
 
-from . import i18n, screens, stats, stories, textgen, ui
+from . import i18n, screens, stats, stories, textgen, ui, updates
 from . import terminal as T
 from .engine import TypingTest
 from .i18n import tr
@@ -84,9 +85,10 @@ class App:
                 tr("Die Datei %s war beschädigt (%s) und wurde nach %s verschoben.",
                    "The file %s was damaged (%s) and was moved to %s.") % (path, error, backup)])
         self.update_achievements()
+        self.updater = updates.UpdateChecker(enabled=self.settings["check_updates"])
         index = 0
         while True:
-            action, index = screens.main_menu(self.term, self.store, index)
+            action, index = screens.main_menu(self.term, self.store, index, self.updater)
             if action in (None, "quit"):
                 return
             if action == "quick":
@@ -94,8 +96,44 @@ class App:
             elif action == "settings":
                 screens.settings_screen(self.term, self.store, on_look_change=self.apply_look,
                                         on_language_change=self.set_ui_language)
+            elif action == "info":
+                self.info()
             else:
                 self.category(action)
+
+    def info(self):
+        index = 0
+        while True:
+            action, index = screens.info_screen(self.term, self.store, self.updater, index)
+            if action in (None, "back"):
+                return
+            if action == "github":
+                webbrowser.open(updates.GITHUB_USER_URL)
+            elif action == "repo":
+                webbrowser.open(updates.GITHUB_REPO_URL)
+            elif action == "pypi":
+                webbrowser.open(updates.PROJECT_URL)
+            elif action == "check":
+                self.updater.start()
+            elif action == "update":
+                self.update_now()
+
+    def update_now(self):
+        with self.term.cooked():
+            print(tr("KeyFlow wird aktualisiert: ", "Updating KeyFlow: ") + updates.update_command_text() + "\n")
+            ok = updates.run_update()
+            print()
+            if ok:
+                print(tr("Fertig! Starte KeyFlow neu, um die neue Version zu nutzen.",
+                         "Done! Restart KeyFlow to use the new version."))
+            else:
+                print(tr("Das Update hat nicht geklappt. Du kannst es selbst ausführen mit:",
+                         "The update did not work. You can run it yourself with:"))
+                print("  " + updates.update_command_text())
+            try:
+                input(tr("\nWeiter mit Enter …", "\nPress Enter to continue …"))
+            except (EOFError, KeyboardInterrupt):
+                pass
 
     def category(self, category):
         index = 0
@@ -508,7 +546,7 @@ class App:
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="keyflow",
                                      description="KeyFlow – a typing trainer for the terminal. "
-                                                 "Made by yns.laf")
+                                                 "Made by YnsLaf")
     parser.add_argument("--data", "--daten", dest="data", metavar="FILE",
                         help="use a different data file (default: ~/.keyflow/daten.json)")
     parser.add_argument("--version", action="version", version="KeyFlow %s" % __version__)
