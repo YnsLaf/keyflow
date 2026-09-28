@@ -92,7 +92,7 @@ DATA_VERSION = 2
 
 
 DATA_FILE = "data.json"
-OLD_DATA_FILE = "daten.json"   # name used up to version 1.4.3
+OLD_DATA_FILE = "daten.json"   # name used by early development versions
 
 
 def _data_file(folder):

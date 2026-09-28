@@ -12,7 +12,7 @@ import tempfile
 import time
 
 PROFILE = "KeyFlow"          # profile name prefix; the opacity is appended ("KeyFlow 70")
-LEGACY_PROFILE = "KeyFlow"   # old profile with 30 % from version 1.4.0
+LEGACY_PROFILE = "KeyFlow"   # old profile with 30 % from early development versions
 TITLE = "KeyFlow"
 
 
