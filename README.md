@@ -108,6 +108,28 @@ Beenden wird das Terminal komplett geleert.
 
 Im Hauptmenü wählst du Länge oder Variante direkt mit **← →** aus.
 
+## Aussehen
+
+- **Hintergrund:** Beim Start färbt Keyflow den Terminal-Hintergrund ein. Zur Wahl
+  stehen Mitternacht, Graphit, Ozean, Wald, Aubergine, Schwarz und „wie im
+  Terminal“. Beim Beenden kommt dein eigener Hintergrund zurück.
+  - Im Mac-Terminal passiert das über AppleScript. Beim ersten Start fragt macOS
+    eventuell, ob das Terminal gesteuert werden darf.
+  - Die Deckkraft deines Profils bleibt erhalten.
+  - In anderen Terminals (iTerm2, Windows Terminal, die meisten Linux-Terminals)
+    funktioniert es über eine Steuersequenz.
+- **Bewegte Farben:**
+  - Der Titel und die Fortschrittslinie über dem Text laufen als Farbverlauf.
+  - Die nächste Taste pulsiert.
+  - In den Einstellungen lässt sich das abschalten.
+- **Tastatur beim Tippen:** Unter dem Text ist eine Tastatur zu sehen.
+  - Die nächste Taste leuchtet, bei Großbuchstaben und Sonderzeichen auch die
+    passende Umschalt-, AltGr- bzw. ⌥-Taste.
+  - Darunter steht, mit welchem Finger du die Taste drückst.
+  - Eine falsch gedrückte Taste blinkt kurz rot.
+  - Das Wort, an dem du gerade tippst, ist hervorgehoben.
+  - Mac-Tastaturen (⌥) werden automatisch erkannt.
+
 ## Tasten beim Tippen
 
 | Taste | Wirkung |
@@ -165,7 +187,8 @@ Im Hauptmenü wählst du Länge oder Variante direkt mit **← →** aus.
   deutsche Tastatur)
 - Fehlermodus: weitertippen erlaubt oder Fehler müssen korrigiert werden
 - Live-WPM, Cursorform, sichtbare Zeilen, Textbreite und Ton bei Fehlern
-- Farbstufe des Kalenders: 256 Farben, True Color oder 16 Farben
+- Hintergrund, Farbmodus (256 Farben, True Color, 16 Farben) und bewegte Farben
+- Tastatur beim Tippen an oder aus
 - Tagesziel von 5 bis 60 Minuten
 - Statistiken zurücksetzen
 
@@ -204,6 +227,7 @@ keyflow/
   stats.py     Rekorde, Serien, schwache Tasten, Erfolge
   storage.py   Einstellungen und Verlauf als JSON
   screens.py   alle Bildschirme
-  ui.py        Farben, Menüs, Diagramme, Kalenderfarben
+  ui.py        Farben, Farbverläufe, Menüs, Diagramme
+  keyboard.py  Bildschirm-Tastatur und Fingerzuordnung
   terminal.py  Tastatur-Eingabe für Windows, Linux und macOS
 ```

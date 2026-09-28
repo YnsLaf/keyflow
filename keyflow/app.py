@@ -55,7 +55,13 @@ class App:
         self.rng = rng or random.Random()
 
     # --- Hauptschleife ---------------------------------------------------
+    def apply_look(self):
+        """Farbmodus, Animationen und Terminal-Hintergrund aus den Einstellungen."""
+        ui.configure(self.settings)
+        self.term.set_background(ui.BACKGROUNDS[self.settings["background"]][1])
+
     def run(self):
+        self.apply_look()
         if self.store.load_error:
             ui.message(self.term, "Hinweis", [self.store.load_error])
         self.update_achievements()
@@ -71,7 +77,7 @@ class App:
             elif action == "achievements":
                 screens.achievements_screen(self.term, self.store)
             elif action == "settings":
-                screens.settings_screen(self.term, self.store)
+                screens.settings_screen(self.term, self.store, on_look_change=self.apply_look)
             elif action == "custom":
                 self.custom_texts()
             elif action == "stories":
@@ -212,6 +218,7 @@ class App:
             while len(target) < (150 if endless else 400):
                 target += " " + self._next_chunk(mode)
         test = TypingTest(target, strict=settings["strict"])
+        wrong = None  # (falsch gedrückte Taste, Zeitpunkt) für das rote Aufblinken
         self.term.flush_input()
         while True:
             now = time.monotonic()
@@ -225,9 +232,10 @@ class App:
                     return "done", test
             if mode.kind != "text" and len(test.target) - test.pos < (120 if endless else 250):
                 test.extend(" " + self._next_chunk(mode))
-            screens.draw_test(self.term, test, now, mode, settings, note)
+            flash = wrong[0] if wrong and now - wrong[1] < 0.35 else None
+            screens.draw_test(self.term, test, now, mode, settings, note, flash)
 
-            key = self.term.read_key(0.1 if test.started else 0.5)
+            key = self.term.read_key(0.08 if test.started or settings["animations"] else 0.5)
             if key is None:
                 continue
             if key in (T.ESC, T.CTRL_C):
@@ -243,8 +251,10 @@ class App:
                 test.backspace_word()
             elif T.is_char(key):
                 ok = test.type_char(key, time.monotonic())
-                if ok is False and settings["bell"]:
-                    self.term.bell()
+                if ok is False:
+                    wrong = (key, time.monotonic())
+                    if settings["bell"]:
+                        self.term.bell()
                 if endless and ok is not None:
                     self._endless_step(mode, test, ok)
                 if mode.kind == "text" and test.complete():

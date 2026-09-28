@@ -1,8 +1,11 @@
 """Farben, Layout-Helfer und wiederverwendbare Bausteine wie das Menü."""
 
+import colorsys
+import math
 import re
+import time
 
-from colorama import Fore, Style
+from colorama import Back, Fore, Style
 
 from . import terminal as T
 
@@ -19,6 +22,127 @@ UNDERLINE = "\x1b[4m"
 REVERSE = "\x1b[7m"
 
 _ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+
+# Aktueller Farbmodus und ob sich Farben bewegen (wird aus den Einstellungen gesetzt).
+STYLE = {"color": "256", "animate": True}
+
+# Hintergründe, die Keyflow beim Start ins Terminal setzt.
+BACKGROUNDS = {
+    "mitternacht": ("Mitternacht", (13, 17, 23)),
+    "graphit": ("Graphit", (24, 24, 27)),
+    "ozean": ("Ozean", (8, 24, 38)),
+    "wald": ("Wald", (12, 28, 20)),
+    "aubergine": ("Aubergine", (28, 14, 34)),
+    "schwarz": ("Schwarz", (0, 0, 0)),
+    "aus": ("wie im Terminal", None),
+}
+
+
+def configure(settings):
+    STYLE["color"] = settings.get("color_mode", "256")
+    STYLE["animate"] = settings.get("animations", True)
+
+
+def tick():
+    """Wie lange auf eine Taste gewartet wird, bevor neu gezeichnet wird."""
+    return 0.08 if STYLE["animate"] else 0.5
+
+
+def clock():
+    """Zeit für Animationen; ohne Animationen bleibt sie stehen."""
+    return time.monotonic() if STYLE["animate"] else 0.0
+
+
+_CUBE = (0, 95, 135, 175, 215, 255)
+
+
+def _cube_index(v):
+    return min(range(6), key=lambda i: abs(_CUBE[i] - v))
+
+
+def rgb_to_256(rgb):
+    """Nächstliegende Farbe der 256er-Palette (Farbwürfel oder Graustufe)."""
+    r, g, b = rgb
+    ci = (_cube_index(r), _cube_index(g), _cube_index(b))
+    cube = tuple(_CUBE[i] for i in ci)
+    level = min(23, max(0, int(round((sum(rgb) / 3 - 8) / 10))))
+    gray = 8 + level * 10
+
+    def dist(c):
+        return sum((x - y) ** 2 for x, y in zip(rgb, c))
+
+    if dist((gray, gray, gray)) < dist(cube):
+        return 232 + level
+    return 16 + 36 * ci[0] + 6 * ci[1] + ci[2]
+
+
+def _basic(rgb, background):
+    h, s, v = colorsys.rgb_to_hsv(*(c / 255 for c in rgb))
+    if s < 0.25:
+        names = ("BLACK", "LIGHTBLACK_EX", "WHITE", "LIGHTWHITE_EX")
+        name = names[min(3, int(v * 4))]
+    else:
+        names = ("RED", "YELLOW", "GREEN", "CYAN", "BLUE", "MAGENTA")
+        name = names[int(((h + 1 / 12) % 1) * 6)]
+        if v > 0.7 and not background:
+            name = "LIGHT" + name + "_EX"
+    return getattr(Back if background else Fore, name)
+
+
+def fg(rgb):
+    mode = STYLE["color"]
+    if mode == "truecolor":
+        return "\x1b[38;2;%d;%d;%dm" % tuple(rgb)
+    if mode == "256":
+        return "\x1b[38;5;%dm" % rgb_to_256(rgb)
+    return _basic(rgb, False)
+
+
+def bg(rgb):
+    mode = STYLE["color"]
+    if mode == "truecolor":
+        return "\x1b[48;2;%d;%d;%dm" % tuple(rgb)
+    if mode == "256":
+        return "\x1b[48;5;%dm" % rgb_to_256(rgb)
+    return _basic(rgb, True)
+
+
+def hsv(h, s, v):
+    r, g, b = colorsys.hsv_to_rgb(h % 1.0, s, v)
+    return (int(r * 255), int(g * 255), int(b * 255))
+
+
+def mix(a, b, f):
+    return tuple(int(x + (y - x) * f) for x, y in zip(a, b))
+
+
+def pulse(speed=3.0):
+    """Wert zwischen 0 und 1, der langsam hin und her schwingt."""
+    return (math.sin(clock() * speed) + 1) / 2
+
+
+def gradient(text, speed=0.12, spread=0.035, base=0.5, s=0.55, v=1.0, bold=True):
+    """Text mit fließendem Farbverlauf."""
+    t = clock()
+    out = [BRIGHT] if bold else []
+    for i, ch in enumerate(text):
+        if ch == " ":
+            out.append(ch)
+        else:
+            out.append(fg(hsv(base + i * spread + t * speed, s, v)) + ch)
+    return "".join(out) + RESET
+
+
+def flow_line(width, fraction, speed=0.25):
+    """Fortschrittslinie, deren gefüllter Teil in bewegten Farben fließt."""
+    fraction = max(0.0, min(1.0, fraction))
+    full = int(round(width * fraction))
+    t = clock()
+    parts = [fg(hsv(0.5 + i * 0.012 - t * speed, 0.6, 1.0)) + "━" for i in range(full)]
+    return "".join(parts) + fg((60, 64, 72)) + "─" * (width - full) + RESET
+
+
+SOFT = "\x1b[38;5;250m"   # ruhiges Grau für nicht ausgewählte Einträge
 
 
 def strip_ansi(text):
@@ -206,7 +330,7 @@ def frame(term, lines, footer="", width=72):
     cols, rows = term.size()
     w = min(width, cols - 2)
     margin = " " * max(1, (cols - w) // 2)
-    top = [""] if rows > 26 else []
+    top = [""] * max(0, (rows - 2 - len(lines)) // 3)
     body = top + [margin + line for line in lines]
     if footer:
         body = body[:rows - 2]
@@ -222,7 +346,7 @@ def content_width(term, width=72):
 
 
 def title_block(title, subtitle="", width=72):
-    head = BRIGHT + ACCENT + title + RESET
+    head = gradient(title)
     if subtitle:
         head += "  " + DIM + subtitle + RESET
     return [head, DIM + "─" * width + RESET]
@@ -294,22 +418,23 @@ def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72):
         menu_lines = []
         for i, it in enumerate(items):
             if it.separator:
-                menu_lines.append(DIM + "  " + "·" * 12 + RESET)
+                menu_lines.append("")
                 continue
             active = i == index
-            marker = ACCENT + BRIGHT + "▶ " if active else "  "
-            label = (BRIGHT + TEXT if active else TEXT) + pad(it.label, label_w) + RESET
+            glow = fg(hsv(0.5 + clock() * 0.12, 0.55, 1.0))
+            marker = glow + BRIGHT + "❯ " if active else "  "
+            label = (BRIGHT + TEXT if active else SOFT) + pad(it.label, label_w) + RESET
             extra = ""
             if it.options is not None:
                 value = it.display_value()
-                extra = (ACCENT + "◀ " + BRIGHT + value + RESET + ACCENT + " ▶") if active \
+                extra = (glow + "‹ " + RESET + BRIGHT + value + RESET + glow + " ›") if active \
                     else (DIM + "  " + value)
             elif it.right:
                 extra = DIM + "  " + it.right
             menu_lines.append(marker + RESET + label + extra + RESET)
         hint = items[index].hint
         # Wenn das Menü nicht auf den Bildschirm passt, nur einen Ausschnitt zeigen.
-        room = rows - len(lines) - (4 if hint else 2) - (1 if rows > 26 else 0)
+        room = rows - len(lines) - (4 if hint else 2)
         if len(menu_lines) > room > 3:
             first = min(max(0, index - room // 2), len(menu_lines) - room)
             menu_lines = menu_lines[first:first + room]
@@ -318,7 +443,7 @@ def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72):
             lines += ["", DIM + hint + RESET]
         draw(term, frame(term, lines, footer, width))
 
-        key = term.read_key(0.5)
+        key = term.read_key(0.08 if STYLE["animate"] else 0.5)
         if key is None:
             continue
         item = items[index]

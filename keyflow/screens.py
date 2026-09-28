@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 from colorama import Back, Fore
 
-from . import stats, storage, stories
+from . import keyboard, stats, storage, stories, ui
 from . import terminal as T
 from .ui import (ACCENT, BAD, BRIGHT, DIM, GOLD, GOOD, RESET, REVERSE, TEXT,
                  UNDERLINE, WARN, Item, acc_color, confirm, bar_chart, big_number,
@@ -52,6 +52,9 @@ MAIN_ITEMS = (
 )
 
 
+TITLE = "K E Y F L O W"
+
+
 def main_header(store, width):
     today = date.today()
     days = stats.daily_seconds(store.history)
@@ -61,7 +64,7 @@ def main_header(store, width):
     best = stats.best_entry(store.history)
     mode = store.settings["color_mode"]
 
-    title = BRIGHT + ACCENT + "K E Y F L O W" + RESET + DIM + "  made by yns.laf" + RESET
+    title = TITLE + DIM + "  made by yns.laf" + RESET
     info = "Serie %s%d %s%s" % (GOLD if current else DIM, current,
                                  "Tag" if current == 1 else "Tage", RESET)
     if best:
@@ -109,25 +112,69 @@ def main_menu(term, store, index=0):
         Item("Beenden", action="quit"),
     ]
     width = content_width(term)
+    cache = {}
+
+    def header():
+        w = content_width(term)
+        if cache.get("width") != w:
+            cache["width"], cache["lines"] = w, main_header(store, w)
+        lines = list(cache["lines"])
+        lines[0] = lines[0].replace(TITLE, ui.gradient(TITLE), 1)
+        return lines
+
     action, index, _ = run_menu(
-        term, lambda: main_header(store, content_width(term)), items, index,
+        term, header, items, index,
         footer="↑↓ auswählen · ←→ ändern · Enter starten · Esc beenden", width=width)
     return action, index
 
 
 # --- Test-Ansicht -------------------------------------------------------------
 
-def _char_style(test, i, cursor):
+KEY_IDLE_BG = (38, 42, 50)
+KEY_IDLE_FG = (150, 156, 168)
+KEY_GLOW_A = (80, 220, 255)
+KEY_GLOW_B = (170, 120, 255)
+KEY_ERROR = (235, 70, 80)
+
+
+def live_keyboard(lang, next_char, flash=None):
+    """Tastatur mit leuchtender nächster Taste. flash = falsch gedrückte Taste."""
+    glow_keys, hint = keyboard.keys_for(next_char, lang)
+    error_key = keyboard.base_key(flash, lang) if flash else None
+    glow = ui.mix(KEY_GLOW_A, KEY_GLOW_B, ui.pulse(4.0))
+    basic = ui.STYLE["color"] == "basic"
+    lines = []
+    for row in keyboard.layout(lang):
+        parts = []
+        for label, key_id, width in row:
+            cap = label.center(width)
+            if key_id is None:
+                parts.append(" " * width)
+            elif key_id == error_key:
+                parts.append(ui.bg(KEY_ERROR) + Fore.WHITE + BRIGHT + cap + RESET)
+            elif key_id in glow_keys:
+                parts.append(ui.bg(glow) + Fore.BLACK + BRIGHT + cap + RESET)
+            elif basic:
+                parts.append(DIM + cap + RESET)
+            else:
+                parts.append(ui.bg(KEY_IDLE_BG) + ui.fg(KEY_IDLE_FG) + cap + RESET)
+        lines.append(" ".join(parts))
+    return lines, hint
+
+
+def _char_style(test, i, cursor, word_end):
     if i < test.pos:
         if test.marks[i]:
             return GOOD
         return Back.RED + Fore.WHITE if test.target[i] == " " else BAD + UNDERLINE
     if i == test.pos:
         return cursor
+    if i < word_end:
+        return TEXT + BRIGHT   # das aktuelle Wort leuchtet
     return DIM
 
 
-def draw_test(term, test, now, mode, settings, note=""):
+def draw_test(term, test, now, mode, settings, note="", flash=None):
     cols, rows = term.size()
     width = max(20, min(settings["text_width"], cols - 6))
     margin = " " * max(1, (cols - width) // 2)
@@ -139,6 +186,8 @@ def draw_test(term, test, now, mode, settings, note=""):
     current = test.cursor_line(width)
     first = current - 1 if visible >= 3 and current > 0 else current
     first = max(0, min(first, n_lines - visible))
+    word_end = test.target.find(" ", test.pos)
+    word_end = len(test.target) if word_end == -1 else word_end
 
     text_lines = []
     for ln in range(first, min(first + visible, n_lines)):
@@ -146,7 +195,7 @@ def draw_test(term, test, now, mode, settings, note=""):
         b = starts[ln + 1] if ln + 1 < n_lines else len(test.target)
         parts, prev = [], None
         for i in range(a, b):
-            style = _char_style(test, i, cursor)
+            style = _char_style(test, i, cursor, word_end)
             if style != prev:
                 parts.append(RESET + style)
                 prev = style
@@ -158,33 +207,34 @@ def draw_test(term, test, now, mode, settings, note=""):
     # Kopfzeile mit Zeit und Werten
     elapsed = test.elapsed(now)
     state = getattr(mode, "state", None)
+    progress = None
     if mode.kind == "endless":
         remaining = max(0.0, state["budget"] - elapsed)
         color = GOOD if remaining > 6 else WARN if remaining > 3 else BAD
-        clock = (color + BRIGHT + "%s s " % fmt_num(remaining, 1) + RESET
-                 + progress_bar(remaining / 20.0, 16, color))
+        clock = color + BRIGHT + "%s s" % fmt_num(remaining, 1) + RESET
+        progress = remaining / 20.0
     elif mode.kind == "time":
         remaining = max(0, mode.limit - elapsed)
         clock = "%d" % (remaining + 0.999) if test.started else "%d" % mode.limit
+        progress = elapsed / mode.limit
     else:
         clock = fmt_clock(elapsed)
+        if mode.kind == "text":
+            progress = test.pos / max(1, len(test.target))
     parts = [BRIGHT + ACCENT + clock + RESET]
     if test.started and elapsed >= 1:
         if settings["live_wpm"]:
-            parts.append(BRIGHT + "%d" % round(test.wpm(now)) + RESET + DIM + " WPM" + RESET)
+            parts.append(BRIGHT + "%d" % round(test.wpm(now)) + RESET + DIM + " wpm" + RESET)
         acc = test.accuracy()
         parts.append(acc_color(acc) + "%d %%" % round(acc) + RESET)
-    if mode.kind == "text":
-        if getattr(mode, "count_words", False):
-            parts.append(DIM + "%d/%d Wörter" % (test.words_done(), test.words_total()) + RESET)
-        else:
-            parts.append(DIM + "Fortschritt %d %%" % (100 * test.pos // max(1, len(test.target))) + RESET)
+    if mode.kind == "text" and getattr(mode, "count_words", False):
+        parts.append(DIM + "%d/%d" % (test.words_done(), test.words_total()) + RESET)
     elif mode.kind == "free":
         parts.append(DIM + "%d Wörter" % test.words_done() + RESET)
     elif mode.kind == "endless":
         parts.append(ACCENT + BRIGHT + "Level %d" % state["level"] + RESET)
         parts.append(BRIGHT + "%d" % state["words"] + RESET + DIM + " Wörter" + RESET)
-    stat_line = (DIM + "  ·  " + RESET).join(parts)
+    stat_line = (DIM + "   " + RESET).join(parts)
     if not test.started:
         stat_line += DIM + "   Tipp einfach los." + RESET
 
@@ -199,9 +249,26 @@ def draw_test(term, test, now, mode, settings, note=""):
     else:
         footer = "Tab neu starten · Esc Menü"
 
-    lines = [margin + label_line, margin + stat_line, ""] + text_lines
+    if progress is None:  # freier Modus: Linie fließt einfach
+        line = ui.flow_line(width, 1.0, speed=0.15)
+    else:
+        line = ui.flow_line(width, progress)
+
+    lines = [margin + label_line, margin + stat_line, margin + line, ""] + text_lines
     if note:
         lines += ["", margin + DIM + note + RESET]
+
+    if settings.get("keyboard", True) and rows >= 20:
+        next_char = test.target[test.pos] if test.pos < len(test.target) else None
+        kb, hint = live_keyboard(settings["language"], next_char, flash)
+        kb_w = max(vlen(k) for k in kb)
+        kb_margin = " " * max(1, (cols - kb_w) // 2)
+        room = rows - 2 - len(lines)
+        if room >= len(kb) + 3:
+            lines += [""] * (2 if room >= len(kb) + 5 else 1)
+            lines += [kb_margin + k for k in kb]
+            lines.append(" " * max(1, (cols - len(hint)) // 2) + DIM + hint + RESET)
+
     top = max(0, (rows - len(lines) - 2) // 3)
     screen = [""] * top + lines
     screen = screen[:rows - 2]
@@ -295,7 +362,7 @@ def result_screen(term, mode, result, info, store):
         width = content_width(term)
         lines = title_block("Ergebnis", width=width) + result_lines(mode, result, info, store, width)
         draw(term, frame(term, lines, footer))
-        key = term.read_key(0.5)
+        key = term.read_key(ui.tick())
         # Kurze Sperre, damit nachträgliche Tastendrücke nichts auslösen.
         if key is None or time.monotonic() - shown_at < 0.6:
             continue
@@ -469,7 +536,7 @@ def tab_screen(term, title, tabs, index=0):
             footer += " · ↑↓ scrollen"
         footer += " · Esc zurück"
         draw(term, frame(term, lines, footer, width))
-        key = term.read_key(0.5)
+        key = term.read_key(ui.tick())
         if key in (T.RIGHT, T.TAB, "l"):
             index, scroll = (index + 1) % len(tabs), 0
         elif key in (T.LEFT, "h"):
@@ -569,7 +636,7 @@ def activity_screen(term, store):
         lines += [""] + activity_lines(store, width, offset)
         footer = "←→ Zeitraum verschieben · Esc zurück"
         draw(term, frame(term, lines, footer, width))
-        key = term.read_key(0.5)
+        key = term.read_key(ui.tick())
         weeks = max(4, min(53, (width - 4) // 2))
         if key in (T.LEFT, "h"):
             offset += max(4, weeks // 2)
@@ -607,7 +674,7 @@ def achievements_screen(term, store):
         lines += body[scroll:scroll + room]
         footer = ("↑↓ scrollen · " if len(body) > room else "") + "Esc zurück"
         draw(term, frame(term, lines, footer))
-        key = term.read_key(0.5)
+        key = term.read_key(ui.tick())
         if key in (T.DOWN, "j"):
             scroll += 1
         elif key in (T.UP, "k"):
@@ -637,22 +704,32 @@ SETTINGS_UI = (
     ("visible_lines", "Sichtbare Zeilen", str, "Wie viele Textzeilen gleichzeitig zu sehen sind."),
     ("text_width", "Textbreite", lambda v: "%d Zeichen" % v, "Maximale Breite einer Textzeile."),
     ("bell", "Ton bei Fehlern", ON_OFF, "Lässt bei jedem Tippfehler die Terminal-Glocke klingen."),
-    ("color_mode", "Kalenderfarben", {"256": "256 Farben", "truecolor": "True Color",
-                                       "basic": "Basis (16 Farben)"},
-     "Falls der Kalender komisch aussieht, probiere eine andere Stufe."),
+    ("background", "Hintergrund", {k: v[0] for k, v in ui.BACKGROUNDS.items()},
+     "Färbt das Terminal beim Start ein – beim Beenden kommt dein Hintergrund zurück."),
+    ("color_mode", "Farbmodus", {"256": "256 Farben", "truecolor": "True Color",
+                                 "basic": "Basis (16 Farben)"},
+     "True Color ist am schönsten. Falls Farben komisch aussehen, nimm 256 Farben."),
+    ("animations", "Bewegte Farben", ON_OFF, "Fließende Farbverläufe und leuchtende Tasten."),
+    ("keyboard", "Tastatur beim Tippen", ON_OFF,
+     "Zeigt unter dem Text eine Tastatur, auf der die nächste Taste leuchtet."),
     None,
     ("daily_goal", "Tagesziel", lambda v: "%d min" % v,
      "Wie lange du pro Tag üben möchtest. Bestimmt auch die Kalenderfarben."),
 )
 
 
-def settings_screen(term, store):
+LOOK_SETTINGS = ("background", "color_mode", "animations")
+
+
+def settings_screen(term, store, on_look_change=None):
     settings = store.settings
 
     def setter(key):
         def change(value):
             settings[key] = value
             store.save()
+            if key in LOOK_SETTINGS and on_look_change:
+                on_look_change()
         return change
 
     items = []
@@ -673,7 +750,7 @@ def settings_screen(term, store):
     index = 0
     while True:
         action, index, _ = run_menu(
-            term, title_block("Einstellungen", "Datei: %s" % store.path, width), items, index,
+            term, lambda: title_block("Einstellungen", "Datei: %s" % store.path, width), items, index,
             footer="↑↓ auswählen · ←→/Enter ändern · Esc zurück", width=width)
         if action == "reset":
             if confirm(term, "Statistiken zurücksetzen",
@@ -701,8 +778,9 @@ def stories_menu(term, store, level, index=0):
     items += [Item.sep(), Item("Zurück", action="back")]
     done = sum(1 for i in range(len(stories.STORIES[level])) if stories.story_id(level, i) in best)
     width = content_width(term)
-    header = title_block("Geschichten – %s" % stories.LEVEL_LABELS[level],
-                         "%d von %d geschafft · auf Deutsch" % (done, len(stories.STORIES[level])), width)
+    def header():
+        return title_block("Geschichten – %s" % stories.LEVEL_LABELS[level],
+                           "%d von %d geschafft · auf Deutsch" % (done, len(stories.STORIES[level])), width)
     return run_menu(term, header, items, index,
                     footer="↑↓ auswählen · Enter tippen · Esc zurück", width=width)
 
@@ -727,7 +805,8 @@ def custom_menu(term, store, index=0):
         Item("Zurück", action="back"),
     ]
     width = content_width(term)
-    header = title_block("Eigener Text", "lange Texte werden in Abschnitten geübt", width)
+    def header():
+        return title_block("Eigener Text", "lange Texte werden in Abschnitten geübt", width)
     return run_menu(term, header, items, index,
                     footer="↑↓ auswählen · Enter üben · Entf/D löschen · Esc zurück",
                     extra_keys=(T.DELETE, "d", "D"), width=width)
