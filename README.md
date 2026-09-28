@@ -49,7 +49,13 @@ On macOS the commands are called `pip3` and `python3`:
 
 ```bash
 pip3 install --user keyflow-typing
-python3 -m keyflow        # only once – afterwards just type: keyflow
+python3 -m keyflow
+```
+
+Run `python3 -m keyflow` only once – it sets up the `keyflow` command. Afterwards just type:
+
+```bash
+keyflow
 ```
 
 > [!NOTE]
@@ -81,9 +87,16 @@ Windows Terminal works best.
 <details>
 <summary><b>🔄 Updating</b></summary>
 
+Installed with pip:
+
 ```bash
-pipx upgrade keyflow-typing                    # installed with pipx
-pip3 install --user --upgrade keyflow-typing   # installed with pip
+pip3 install --user --upgrade keyflow-typing
+```
+
+Installed with pipx:
+
+```bash
+pipx upgrade keyflow-typing
 ```
 
 Or simply open **Info → Update now** inside KeyFlow.
@@ -99,10 +112,11 @@ your statistics too.
 By hand:
 
 ```bash
-pip3 uninstall keyflow-typing      # or: pipx uninstall keyflow-typing
-rm -f "$(command -v keyflow)"      # removes the keyflow link, if one is left
-rm -rf ~/.keyflow                  # optional: your data
+pip3 uninstall keyflow-typing
 ```
+
+With pipx use `pipx uninstall keyflow-typing` instead. If a `keyflow` link is left,
+`rm -f "$(command -v keyflow)"` removes it, and `rm -rf ~/.keyflow` deletes your data.
 
 In the macOS Terminal you can also delete the "KeyFlow …" profiles under
 *Terminal → Settings → Profiles*.
