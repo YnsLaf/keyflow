@@ -1,13 +1,16 @@
 import unittest
 
-from keyflow import keyboard, ui
+from keyflow import i18n, keyboard, ui
 
 
 class KeyboardTest(unittest.TestCase):
     def test_letters_and_shift_use_opposite_hand(self):
+        i18n.set_language("de")
         keys, hint = keyboard.keys_for("A", "de")
         self.assertEqual(keys, {"a", "shift_r"})
         self.assertIn("linker kleiner Finger", hint)
+        i18n.set_language("en")
+        self.assertIn("left pinky", keyboard.keys_for("A", "de")[1])
         keys, _ = keyboard.keys_for("J", "de")
         self.assertEqual(keys, {"j", "shift_l"})
 

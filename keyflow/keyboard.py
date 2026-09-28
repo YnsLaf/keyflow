@@ -2,6 +2,8 @@
 
 import sys
 
+from .i18n import pick, tr
+
 MAC = sys.platform == "darwin"
 
 # Zeichen-Tasten je Reihe (klein geschrieben = Grundbelegung)
@@ -27,9 +29,11 @@ FINGERS = {
 }
 
 FINGER_NAMES = {
-    "L5": "linker kleiner Finger", "L4": "linker Ringfinger", "L3": "linker Mittelfinger",
-    "L2": "linker Zeigefinger", "R2": "rechter Zeigefinger", "R3": "rechter Mittelfinger",
-    "R4": "rechter Ringfinger", "R5": "rechter kleiner Finger", "T": "Daumen",
+    "L5": ("linker kleiner Finger", "left pinky"), "L4": ("linker Ringfinger", "left ring finger"),
+    "L3": ("linker Mittelfinger", "left middle finger"), "L2": ("linker Zeigefinger", "left index finger"),
+    "R2": ("rechter Zeigefinger", "right index finger"), "R3": ("rechter Mittelfinger", "right middle finger"),
+    "R4": ("rechter Ringfinger", "right ring finger"), "R5": ("rechter kleiner Finger", "right pinky"),
+    "T": ("Daumen", "thumb"),
 }
 
 # Umschalt-Zeichen -> Grundtaste
@@ -90,7 +94,7 @@ def keys_for(ch, lang):
     if ch is None:
         return set(), ""
     if ch == " ":
-        return {" "}, "Leertaste  ·  Daumen"
+        return {" "}, tr("Leertaste  ·  Daumen", "Space  ·  thumb")
     key, shift, alt = None, False, False
     low = ch.lower() if len(ch.lower()) == 1 else ch
     if any(low in row for row in ROWS[lang]):
@@ -102,19 +106,21 @@ def keys_for(ch, lang):
         key, shift = alt_map(lang)[ch]
         alt = True
     if key is None:
-        return set(), "„%s“ gibt es auf dieser Tastatur nicht direkt" % ch
+        return set(), tr("„%s“ gibt es auf dieser Tastatur nicht direkt",
+                         "\"%s\" is not on this keyboard") % ch
     finger = finger_of(key, lang) or "L2"
     left = finger.startswith("L")
     keys = {key}
     label = key.upper() if len(key.upper()) == 1 else key
-    hint = "%s  ·  %s" % (label, FINGER_NAMES[finger])
+    hint = "%s  ·  %s" % (label, pick(FINGER_NAMES[finger]))
+    right, left_word = tr("rechts", "right"), tr("links", "left")
     if shift:
         keys.add("shift_r" if left else "shift_l")
-        hint += "  +  ⇧ %s" % ("rechts" if left else "links")
+        hint += "  +  ⇧ %s" % (right if left else left_word)
     if alt:
         if MAC:
             keys.add("mod_r" if left else "mod_l")
-            hint += "  +  ⌥ %s" % ("rechts" if left else "links")
+            hint += "  +  ⌥ %s" % (right if left else left_word)
         else:
             keys.add("mod_r")
             hint += "  +  AltGr"

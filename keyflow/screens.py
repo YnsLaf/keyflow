@@ -7,49 +7,88 @@ from colorama import Back, Fore
 
 from . import keyboard, stats, storage, stories, ui
 from . import terminal as T
+from .i18n import pick, tr
 from .ui import (ACCENT, BAD, BRIGHT, DIM, GOLD, GOOD, RESET, REVERSE, TEXT,
                  UNDERLINE, WARN, Item, acc_color, confirm, bar_chart, big_number,
                  content_width, draw, fmt_clock, fmt_minutes, fmt_date, fmt_duration, fmt_num,
                  frame, heat_cell, heat_level, pad, progress_bar, run_menu,
                  sparkline, title_block, vlen)
 
-MONTHS = ("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez")
-WEEKDAYS = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
-ON_OFF = {True: "an", False: "aus"}
+def months():
+    return tr(("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"),
+              ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
-FREE_LABELS = {
-    "words": "Wörter", "sentences": "Sätze", "numbers": "Zahlen",
-    "symbols": "Sonderzeichen", "mixed": "Gemischt",
-}
-QUOTE_LABELS = {"random": "zufällig", "short": "kurz", "medium": "mittel", "long": "lang"}
+
+def weekdays():
+    return tr(("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"), ("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"))
+
+
+def on_off(value):
+    return tr("an", "on") if value else tr("aus", "off")
+
+
+def free_label(value):
+    return pick({"words": ("Wörter", "Words"), "sentences": ("Sätze", "Sentences"),
+                 "numbers": ("Zahlen", "Numbers"), "symbols": ("Sonderzeichen", "Symbols"),
+                 "mixed": ("Gemischt", "Mixed")}[value])
+
+
+def quote_label(value):
+    return pick({"random": ("zufällig", "random"), "short": ("kurz", "short"),
+                 "medium": ("mittel", "medium"), "long": ("lang", "long")}[value])
+
+
+def words_label(n):
+    return tr("%d Wörter", "%d words") % n
 
 
 # --- Hauptmenü ---------------------------------------------------------------
 
-MAIN_ITEMS = (
-    ("time", "Zeit-Test", lambda v: "%d s" % v,
-     "So viele Wörter wie möglich, bis die Zeit abläuft."),
-    ("words", "Wörter-Test", lambda v: "%d Wörter" % v,
-     "Eine feste Anzahl Wörter – so schnell und genau wie möglich."),
-    ("free", "Freier Modus", FREE_LABELS,
-     "Ohne Limit und ohne Druck: tippe endlos weiter. Esc beendet und speichert."),
-    ("endless", "Unendlich-Modus", lambda v: "ab Level %d" % v,
-     "Die Zeit läuft ab – jedes richtige Wort bringt Sekunden. Wie weit kommst du?"),
-    ("stories", "Geschichten", lambda v: "%s (10)" % stories.LEVEL_LABELS[v],
-     "40 Geschichten: einfach, mittel, schwer, extrem. Enter öffnet die Liste."),
-    ("sentences", "Sätze", lambda v: "1 Satz" if v == 1 else "%d Sätze" % v,
-     "Automatisch erzeugte Sätze mit Groß-/Kleinschreibung und Satzzeichen."),
-    ("numbers", "Zahlen", lambda v: "%d Zahlen" % v,
-     "Preise, Uhrzeiten, Datumsangaben, Rechnungen, Telefonnummern …"),
-    ("symbols", "Sonderzeichen", lambda v: "%d Gruppen" % v,
-     "Klammern, Operatoren, Pfade und E-Mails – ideal fürs Programmieren."),
-    ("mixed", "Gemischt (Profi)", lambda v: "%d Teile" % v,
-     "Wörter, Großbuchstaben, Zahlen und Sonderzeichen durcheinander."),
-    ("quotes", "Zitate & Sprichwörter", QUOTE_LABELS,
-     "Sprichwörter und berühmte Textstellen aus der Literatur."),
-    ("weak", "Schwächen-Training", lambda v: "%d Wörter" % v,
-     "Übt gezielt die Tasten, bei denen du die meisten Fehler machst."),
-)
+def main_items():
+    """(Schlüssel, Name, Format für den Wert, Hinweis) aller Übungsmodi."""
+    return (
+        ("time", tr("Zeit-Test", "Time test"), lambda v: "%d s" % v,
+         tr("So viele Wörter wie möglich, bis die Zeit abläuft.",
+            "As many words as possible before the time runs out.")),
+        ("words", tr("Wörter-Test", "Word test"), words_label,
+         tr("Eine feste Anzahl Wörter – so schnell und genau wie möglich.",
+            "A fixed number of words – as fast and accurate as you can.")),
+        ("free", tr("Freier Modus", "Free mode"), free_label,
+         tr("Ohne Limit und ohne Druck: tippe endlos weiter. Esc beendet und speichert.",
+            "No limit, no pressure: keep typing forever. Esc ends and saves.")),
+        ("endless", tr("Unendlich-Modus", "Endless mode"), lambda v: tr("ab Level %d", "from level %d") % v,
+         tr("Die Zeit läuft ab – jedes richtige Wort bringt Sekunden. Wie weit kommst du?",
+            "The clock runs down – every correct word adds seconds. How far can you get?")),
+        ("stories", tr("Geschichten", "Stories"), lambda v: "%s (10)" % stories.level_label(v),
+         tr("40 Geschichten: einfach, mittel, schwer, extrem. Enter öffnet die Liste.",
+            "40 stories: easy, medium, hard, extreme. Enter opens the list.")),
+        ("sentences", tr("Sätze", "Sentences"),
+         lambda v: tr("1 Satz", "1 sentence") if v == 1 else tr("%d Sätze", "%d sentences") % v,
+         tr("Automatisch erzeugte Sätze mit Groß-/Kleinschreibung und Satzzeichen.",
+            "Generated sentences with capitals and punctuation.")),
+        ("numbers", tr("Zahlen", "Numbers"), lambda v: tr("%d Zahlen", "%d numbers") % v,
+         tr("Preise, Uhrzeiten, Datumsangaben, Rechnungen, Telefonnummern …",
+            "Prices, times, dates, sums, phone numbers …")),
+        ("symbols", tr("Sonderzeichen", "Symbols"), lambda v: tr("%d Gruppen", "%d groups") % v,
+         tr("Klammern, Operatoren, Pfade und E-Mails – ideal fürs Programmieren.",
+            "Brackets, operators, paths and e-mails – great for coding.")),
+        ("mixed", tr("Gemischt (Profi)", "Mixed (pro)"), lambda v: tr("%d Teile", "%d parts") % v,
+         tr("Wörter, Großbuchstaben, Zahlen und Sonderzeichen durcheinander.",
+            "Words, capitals, numbers and symbols all mixed up.")),
+        ("quotes", tr("Zitate & Sprichwörter", "Quotes & proverbs"), quote_label,
+         tr("Sprichwörter und berühmte Textstellen aus der Literatur.",
+            "Proverbs and famous lines from literature.")),
+        ("weak", tr("Schwächen-Training", "Weak keys"), words_label,
+         tr("Übt gezielt die Tasten, bei denen du die meisten Fehler machst.",
+            "Trains exactly the keys you get wrong the most.")),
+    )
+
+
+def mode_info(key):
+    for k, label, fmt, hint in main_items():
+        if k == key:
+            return label, fmt, hint
+    raise KeyError(key)
 
 
 TITLE = "K E Y F L O W"
@@ -65,42 +104,49 @@ def main_header(store, width):
     mode = store.settings["color_mode"]
 
     title = TITLE + DIM + "  made by yns.laf" + RESET
-    info = "Serie %s%d %s%s" % (GOLD if current else DIM, current,
-                                 "Tag" if current == 1 else "Tage", RESET)
+    info = tr("Serie", "Streak") + " %s%d %s%s" % (
+        GOLD if current else DIM, current,
+        tr("Tag", "day") if current == 1 else tr("Tage", "days"), RESET)
     if best:
-        info += DIM + "  ·  " + RESET + "Bestwert " + BRIGHT + "%d WPM" % round(best["wpm"]) + RESET
+        info += DIM + "  ·  " + RESET + tr("Bestwert ", "Best ") + BRIGHT + "%d WPM" % round(best["wpm"]) + RESET
     first = title + " " * max(2, width - vlen(title) - vlen(info)) + info
 
     cells = " ".join(heat_cell(heat_level(days.get(today - timedelta(days=i), 0), goal * 60), mode)
                      for i in range(13, -1, -1))
     goal_done = done >= goal * 60
-    today_text = "Heute %s/%d min " % (fmt_minutes(done), goal)
+    today_text = tr("Heute", "Today") + " %s/%d min " % (fmt_minutes(done), goal)
     bar = progress_bar(done / (goal * 60), 12, GOOD if goal_done else ACCENT)
     tick = GOOD + " ✓" + RESET if goal_done else ""
     second_left = today_text + bar + tick
-    second_right = DIM + "14 Tage " + RESET + cells
+    second_right = DIM + tr("14 Tage ", "14 days ") + RESET + cells
     second = second_left + " " * max(2, width - vlen(second_left) - vlen(second_right)) + second_right
     return [first, second, DIM + "─" * width + RESET]
 
 
-MODE_INFO = {key: (label, fmt, hint) for key, label, fmt, hint in MAIN_ITEMS}
-
-CATEGORIES = (
-    ("practice", "Tippen üben", "Zeit-Test, Wörter-Test, Freier Modus und Unendlich-Modus.",
-     ("time", "words", "free", "endless")),
-    ("texts", "Texte & Geschichten", "Geschichten, Sätze, Zitate und eigene Texte.",
-     ("stories", "sentences", "quotes", "custom")),
-    ("special", "Zahlen & Zeichen", "Zahlen, Sonderzeichen, Gemischt und Schwächen-Training.",
-     ("numbers", "symbols", "mixed", "weak")),
-    ("progress", "Fortschritt", "Statistik & Rekorde, Aktivitätskalender und Erfolge.",
-     ("stats", "activity", "achievements")),
-)
-CATEGORY_LABELS = {key: label for key, label, _, _ in CATEGORIES}
+def categories():
+    return (
+        ("practice", tr("Tippen üben", "Practice"),
+         tr("Zeit-Test, Wörter-Test, Freier Modus und Unendlich-Modus.",
+            "Time test, word test, free mode and endless mode."),
+         ("time", "words", "free", "endless")),
+        ("texts", tr("Texte & Geschichten", "Texts & stories"),
+         tr("Geschichten, Sätze, Zitate und eigene Texte.",
+            "Stories, sentences, quotes and your own texts."),
+         ("stories", "sentences", "quotes", "custom")),
+        ("special", tr("Zahlen & Zeichen", "Numbers & symbols"),
+         tr("Zahlen, Sonderzeichen, Gemischt und Schwächen-Training.",
+            "Numbers, symbols, mixed and weak-key training."),
+         ("numbers", "symbols", "mixed", "weak")),
+        ("progress", tr("Fortschritt", "Progress"),
+         tr("Statistik & Rekorde, Aktivitätskalender und Erfolge.",
+            "Stats & records, activity calendar and achievements."),
+         ("stats", "activity", "achievements")),
+    )
 
 
 def quick_label(store):
     last = store.settings["menu"]["last"]
-    label, fmt, _ = MODE_INFO[last]
+    label, fmt, _ = mode_info(last)
     value = store.settings["menu"][last]
     text = fmt.get(value, str(value)) if isinstance(fmt, dict) else fmt(value)
     return "%s · %s" % (label, text)
@@ -115,23 +161,28 @@ def mascot_messages(store):
     goal = store.settings["daily_goal"] * 60
     done = days.get(today, 0)
     best = stats.best_entry(store.history)
+    home_row = tr("Tipp: Die Zeigefinger ruhen auf F und J.",
+                  "Tip: Your index fingers rest on F and J.")
     if not store.history:
-        return ["Hi, ich bin Flo! Drück Enter und leg los.",
-                "Tipp: Die Zeigefinger ruhen auf F und J."]
+        return [tr("Hi, ich bin Flow! Drück Enter und leg los.",
+                   "Hi, I'm Flow! Press Enter and get going."), home_row]
     msgs = []
     if done >= goal:
-        msgs.append("Tagesziel geschafft – stark!")
+        msgs.append(tr("Tagesziel geschafft – stark!", "Daily goal done – awesome!"))
     elif done > 0:
-        msgs.append("Noch %d min bis zum Tagesziel." % max(1, round((goal - done) / 60)))
+        msgs.append(tr("Noch %d min bis zum Tagesziel.", "%d more min to your daily goal.")
+                    % max(1, round((goal - done) / 60)))
     else:
-        msgs.append("Heute noch nicht geübt. Eine Runde?")
+        msgs.append(tr("Heute noch nicht geübt. Eine Runde?", "No practice yet today. One round?"))
     if current >= 2:
-        msgs.append("%d Tage in Folge – weiter so!" % current)
+        msgs.append(tr("%d Tage in Folge – weiter so!", "%d days in a row – keep it up!") % current)
     if best:
-        msgs.append("Dein Rekord: %d WPM. Knackst du ihn?" % round(best["wpm"]))
-    msgs += ["Tipp: Schau auf den Text, nicht auf die Tasten.",
-             "Tipp: Erst genau, dann schnell.",
-             "Tipp: Die Zeigefinger ruhen auf F und J."]
+        msgs.append(tr("Dein Rekord: %d WPM. Knackst du ihn?", "Your record: %d WPM. Can you beat it?")
+                    % round(best["wpm"]))
+    msgs += [tr("Tipp: Schau auf den Text, nicht auf die Tasten.",
+                "Tip: Look at the text, not at the keys."),
+             tr("Tipp: Erst genau, dann schnell.", "Tip: Accuracy first, speed follows."),
+             home_row]
     return msgs
 
 
@@ -147,7 +198,7 @@ def _wrap_words(text, width):
 
 
 def mascot(store, messages):
-    """Flo, das KeyFlow-Maskottchen: blinzelt, wippt und gibt Tipps."""
+    """Flow, das KeyFlow-Maskottchen: blinzelt, wippt und gibt Tipps."""
     t = ui.clock()
     body = ui.fg(ui.hsv(0.5 + t * 0.08, 0.45, 0.95))
     eye_col = TEXT + BRIGHT
@@ -174,20 +225,22 @@ def mascot(store, messages):
         body + "    ╵   ╵" + RESET,
     ]
     return bubble + ([""] if bob else []) + figure + ([] if bob else [""]) + \
-        [DIM + "     Flo" + RESET]
+        [DIM + "    Flow" + RESET]
 
 
 # --- Hauptmenü --------------------------------------------------------------
 
 def main_menu(term, store, index=0):
-    items = [Item("Weiter: " + quick_label(store), action="quick",
-                  hint="Startet sofort deinen zuletzt gespielten Modus.")]
-    for key, label, hint, _ in CATEGORIES:
+    items = [Item(tr("Weiter: ", "Continue: ") + quick_label(store), action="quick",
+                  hint=tr("Startet sofort deinen zuletzt gespielten Modus.",
+                          "Starts the mode you played last right away."))]
+    for key, label, hint, _ in categories():
         items.append(Item(label, action=key, hint=hint))
     items += [
-        Item("Einstellungen", action="settings",
-             hint="Sprache, Satzzeichen, Hintergrund, Tastatur, Tagesziel …"),
-        Item("Beenden", action="quit", hint="Bis bald!"),
+        Item(tr("Einstellungen", "Settings"), action="settings",
+             hint=tr("Sprache, Satzzeichen, Hintergrund, Tastatur, Tagesziel …",
+                     "Language, punctuation, background, keyboard, daily goal …")),
+        Item(tr("Beenden", "Quit"), action="quit", hint=tr("Bis bald!", "See you soon!")),
     ]
     width = content_width(term)
     cache = {}
@@ -203,7 +256,8 @@ def main_menu(term, store, index=0):
 
     action, index, _ = run_menu(
         term, header, items, index, numbered=True, side=lambda: mascot(store, messages),
-        side_col=40, footer="↑↓ wählen · Enter öffnen · 1–7 direkt · Esc beenden", width=width)
+        side_col=40, footer=tr("↑↓ wählen · Enter öffnen · 1–7 direkt · Esc beenden",
+                               "↑↓ choose · Enter open · 1–7 direct · Esc quit"), width=width)
     return action, index
 
 
@@ -217,33 +271,38 @@ def category_menu(term, store, category, index=0):
         return change
 
     items = []
-    keys = dict((c[0], c[3]) for c in CATEGORIES)[category]
-    for key in keys:
-        if key in MODE_INFO:
-            label, fmt, hint = MODE_INFO[key]
+    cats = {c[0]: c for c in categories()}
+    for key in cats[category][3]:
+        if key in storage.MENU_OPTIONS:
+            label, fmt, hint = mode_info(key)
             items.append(Item(label, action=key, options=storage.MENU_OPTIONS[key],
                               value=menu[key], fmt=fmt, on_change=setter(key), hint=hint))
         elif key == "custom":
-            items.append(Item("Eigener Text", action="custom",
-                              right="%d gespeichert" % len(store.custom_texts),
-                              hint="Eigene Texte einfügen oder aus einer Datei laden."))
+            items.append(Item(tr("Eigener Text", "Your own text"), action="custom",
+                              right=tr("%d gespeichert", "%d saved") % len(store.custom_texts),
+                              hint=tr("Eigene Texte einfügen oder aus einer Datei laden.",
+                                      "Paste your own texts or load them from a file.")))
         elif key == "stats":
-            items.append(Item("Statistik & Rekorde", action="stats",
-                              hint="Bestwerte, Verlauf, Durchschnitt und deine schwächsten Tasten."))
+            items.append(Item(tr("Statistik & Rekorde", "Stats & records"), action="stats",
+                              hint=tr("Bestwerte, Verlauf, Durchschnitt und deine schwächsten Tasten.",
+                                      "Best scores, history, averages and your weakest keys.")))
         elif key == "activity":
-            items.append(Item("Aktivität", action="activity",
-                              hint="Kalender deiner Übungstage – wie auf GitHub."))
+            items.append(Item(tr("Aktivität", "Activity"), action="activity",
+                              hint=tr("Kalender deiner Übungstage – wie auf GitHub.",
+                                      "Calendar of your practice days – like on GitHub.")))
         elif key == "achievements":
-            items.append(Item("Erfolge", action="achievements",
+            items.append(Item(tr("Erfolge", "Achievements"), action="achievements",
                               right="%d/%d" % (len(store.achievements), len(stats.ACHIEVEMENTS)),
-                              hint="Abzeichen für Tempo, Genauigkeit und Ausdauer."))
-    items += [Item.sep(), Item("Zurück", action="back")]
+                              hint=tr("Abzeichen für Tempo, Genauigkeit und Ausdauer.",
+                                      "Badges for speed, accuracy and stamina.")))
+    items += [Item.sep(), Item(tr("Zurück", "Back"), action="back")]
     width = content_width(term)
     has_options = any(it.options for it in items)
-    footer = ("↑↓ wählen · ←→ Länge/Stufe ändern · Enter starten · Esc zurück" if has_options
-              else "↑↓ wählen · Enter öffnen · Esc zurück")
+    footer = (tr("↑↓ wählen · ←→ Länge/Stufe ändern · Enter starten · Esc zurück",
+                 "↑↓ choose · ←→ change length/level · Enter start · Esc back") if has_options
+              else tr("↑↓ wählen · Enter öffnen · Esc zurück", "↑↓ choose · Enter open · Esc back"))
     action, index, _ = run_menu(
-        term, lambda: title_block(CATEGORY_LABELS[category], width=width) + [""], items, index,
+        term, lambda: title_block(cats[category][1], width=width) + [""], items, index,
         numbered=True, footer=footer, width=width)
     return action, index
 
@@ -355,24 +414,25 @@ def draw_test(term, test, now, mode, settings, note="", flash=None):
     if mode.kind == "text" and getattr(mode, "count_words", False):
         parts.append(DIM + "%d/%d" % (test.words_done(), test.words_total()) + RESET)
     elif mode.kind == "free":
-        parts.append(DIM + "%d Wörter" % test.words_done() + RESET)
+        parts.append(DIM + words_label(test.words_done()) + RESET)
     elif mode.kind == "endless":
         parts.append(ACCENT + BRIGHT + "Level %d" % state["level"] + RESET)
-        parts.append(BRIGHT + "%d" % state["words"] + RESET + DIM + " Wörter" + RESET)
+        parts.append(BRIGHT + "%d" % state["words"] + RESET + DIM + tr(" Wörter", " words") + RESET)
     stat_line = (DIM + "   " + RESET).join(parts)
     if not test.started:
-        stat_line += DIM + "   Tipp einfach los." + RESET
+        stat_line += DIM + tr("   Tipp einfach los.", "   Just start typing.") + RESET
 
     label_line = DIM + mode.label + RESET
     if settings["strict"]:
-        label_line += DIM + " · Fehler korrigieren" + RESET
+        label_line += DIM + tr(" · Fehler korrigieren", " · fix mistakes") + RESET
 
     if mode.kind == "free":
-        footer = "Esc beenden & speichern · Tab neuer Text"
+        footer = tr("Esc beenden & speichern · Tab neuer Text", "Esc finish & save · Tab new text")
     elif mode.kind == "endless":
-        footer = "Richtige Wörter bringen Zeit, Fehler kosten 1 s · Esc aufgeben · Tab neu"
+        footer = tr("Richtige Wörter bringen Zeit, Fehler kosten 1 s · Esc aufgeben · Tab neu",
+                    "Correct words add time, mistakes cost 1 s · Esc give up · Tab restart")
     else:
-        footer = "Tab neu starten · Esc Menü"
+        footer = tr("Tab neu starten · Esc Menü", "Tab restart · Esc menu")
 
     if progress is None:  # freier Modus: Linie fließt einfach
         line = ui.flow_line(width, 1.0, speed=0.15)
@@ -385,9 +445,9 @@ def draw_test(term, test, now, mode, settings, note="", flash=None):
 
     if settings.get("keyboard", True) and rows >= 20:
         next_char = test.target[test.pos] if test.pos < len(test.target) else None
-        kb, hint = live_keyboard(settings["language"], next_char, flash)
+        kb, hint = live_keyboard(settings["kb_layout"], next_char, flash)
         # Mitte der Grundreihe (A … #) genau unter die Mitte des Textes setzen
-        home = keyboard.layout(settings["language"])[2]
+        home = keyboard.layout(settings["kb_layout"])[2]
         home_center = (home[0][0] + home[-1][0] + home[-1][3]) / 2
         text_center = len(margin) + width / 2
         kb_margin = " " * max(0, int(round(text_center - home_center)))
@@ -411,7 +471,7 @@ def draw_test(term, test, now, mode, settings, note="", flash=None):
 
 def record_text(entry):
     if "score" in entry:
-        return "%d Wörter" % entry["score"]
+        return words_label(entry["score"])
     return "%d WPM" % round(entry["wpm"])
 
 
@@ -429,67 +489,72 @@ def result_lines(mode, result, info, store, width):
 
     lines = [DIM + mode.label + RESET, ""] + big + [""]
     details = [
-        "Roh " + BRIGHT + fmt_num(result["raw"]) + RESET + DIM + " WPM" + RESET,
-        "Konstanz " + BRIGHT + "%d %%" % result["consistency"] + RESET,
-        "Zeichen " + GOOD + "%d" % result["chars"] + RESET + DIM + " / " + RESET
+        tr("Roh ", "Raw ") + BRIGHT + fmt_num(result["raw"]) + RESET + DIM + " WPM" + RESET,
+        tr("Konstanz ", "Consistency ") + BRIGHT + "%d %%" % result["consistency"] + RESET,
+        tr("Zeichen ", "Characters ") + GOOD + "%d" % result["chars"] + RESET + DIM + " / " + RESET
         + BAD + "%d" % result["errors"] + RESET,
-        "Zeit " + BRIGHT + fmt_num(result["duration"], 1) + " s" + RESET,
+        tr("Zeit ", "Time ") + BRIGHT + fmt_num(result["duration"], 1) + " s" + RESET,
     ]
     lines.append((DIM + "  ·  " + RESET).join(details))
     entry = info.get("entry") or {}
     if mode.kind == "endless" and "score" in entry:
-        lines.append("Geschafft " + GOLD + "%d Wörter" % entry["score"] + RESET + DIM + "  ·  " + RESET
-                     + "erreicht " + ACCENT + BRIGHT + "Level %d" % entry["level"] + RESET
-                     + DIM + "  ·  " + RESET + "überlebt " + BRIGHT + fmt_clock(result["duration"]) + RESET)
+        lines.append(tr("Geschafft ", "Made it ") + GOLD + words_label(entry["score"]) + RESET
+                     + DIM + "  ·  " + RESET + tr("erreicht ", "reached ") + ACCENT + BRIGHT
+                     + "Level %d" % entry["level"] + RESET + DIM + "  ·  " + RESET
+                     + tr("überlebt ", "survived ") + BRIGHT + fmt_clock(result["duration"]) + RESET)
 
     series = result["wpm_series"]
     if len(series) >= 3:
         smooth = [sum(series[max(0, i - 2):i + 1]) / len(series[max(0, i - 2):i + 1])
                   for i in range(len(series))]
-        lines.append("Verlauf " + ACCENT + sparkline(smooth, width - 20) + RESET
+        lines.append(tr("Verlauf ", "Speed ") + ACCENT + sparkline(smooth, width - 20) + RESET
                      + DIM + "  %d–%d WPM" % (min(smooth), max(smooth)) + RESET)
     lines.append("")
 
     if not info.get("saved"):
-        lines.append(WARN + "Zu kurz – dieser Test wurde nicht gespeichert." + RESET)
+        lines.append(WARN + tr("Zu kurz – dieser Test wurde nicht gespeichert.",
+                               "Too short – this test was not saved.") + RESET)
     else:
         prev = info.get("previous")
         if info.get("record") and prev:
-            lines.append(GOLD + "★ NEUER REKORD! " + RESET + DIM + "(vorher %s)" % record_text(prev) + RESET)
+            lines.append(GOLD + tr("★ NEUER REKORD! ", "★ NEW RECORD! ") + RESET + DIM
+                         + tr("(vorher %s)", "(before: %s)") % record_text(prev) + RESET)
         elif info.get("record"):
-            lines.append(GOLD + "★ Erster Eintrag in diesem Modus – das ist dein Rekord." + RESET)
+            lines.append(GOLD + tr("★ Erster Eintrag in diesem Modus – das ist dein Rekord.",
+                                   "★ First result in this mode – that's your record.") + RESET)
         elif prev:
-            lines.append(DIM + "Rekord in diesem Modus: %s" % record_text(prev) + RESET)
+            lines.append(DIM + tr("Rekord in diesem Modus: %s", "Record in this mode: %s")
+                         % record_text(prev) + RESET)
         for key in info.get("achievements", []):
-            lines.append(GOLD + "✓ Erfolg freigeschaltet: " + RESET + BRIGHT
-                         + stats.ACHIEVEMENT_NAMES.get(key, key) + RESET)
+            lines.append(GOLD + tr("✓ Erfolg freigeschaltet: ", "✓ Achievement unlocked: ") + RESET
+                         + BRIGHT + stats.achievement_text(key)[0] + RESET)
 
     errors = sorted(result["key_errors"].items(), key=lambda kv: -kv[1])[:6]
     if errors:
         shown = "  ".join(BAD + ("␣" if ch == " " else ch) + RESET + DIM + " ×%d" % n + RESET
                           for ch, n in errors)
-        lines.append("Fehler bei " + shown)
+        lines.append(tr("Fehler bei ", "Mistakes on ") + shown)
 
     goal = store.settings["daily_goal"] * 60
     done = stats.daily_seconds(store.history).get(date.today(), 0)
     reached = done >= goal
-    lines.append("Tagesziel " + progress_bar(done / goal, 16, GOOD if reached else ACCENT)
+    lines.append(tr("Tagesziel ", "Daily goal ") + progress_bar(done / goal, 16, GOOD if reached else ACCENT)
                  + " %s/%d min" % (fmt_minutes(done), goal // 60)
-                 + (GOOD + "  ✓ geschafft!" + RESET if reached else ""))
+                 + (GOOD + tr("  ✓ geschafft!", "  ✓ done!") + RESET if reached else ""))
     return lines
 
 
 def result_screen(term, mode, result, info, store):
     """Zeigt das Ergebnis. Gibt "next", "repeat" oder "menu" zurück."""
-    footer = "Enter nächster Test"
+    footer = tr("Enter nächster Test", "Enter next test")
     if mode.repeatable:
-        footer += " · R gleichen Text wiederholen"
-    footer += " · Esc Menü"
+        footer += tr(" · R gleichen Text wiederholen", " · R repeat same text")
+    footer += tr(" · Esc Menü", " · Esc menu")
     term.flush_input()
     shown_at = time.monotonic()
     while True:
         width = content_width(term)
-        lines = title_block("Ergebnis", width=width) + result_lines(mode, result, info, store, width)
+        lines = title_block(tr("Ergebnis", "Result"), width=width) + result_lines(mode, result, info, store, width)
         draw(term, frame(term, lines, footer))
         key = term.read_key(ui.tick())
         # Kurze Sperre, damit nachträgliche Tastendrücke nichts auslösen.
@@ -508,7 +573,7 @@ def result_screen(term, mode, result, info, store):
 def overview_lines(store, width):
     history = store.history
     if not history:
-        return [DIM + "Noch keine Tests – leg los!" + RESET]
+        return [DIM + tr("Noch keine Tests – leg los!", "No tests yet – get started!") + RESET]
     today = date.today()
     days = stats.daily_seconds(history)
     tests_today = stats.daily_tests(history).get(today, 0)
@@ -519,24 +584,27 @@ def overview_lines(store, width):
     week = sum(v for d, v in days.items() if d >= week_start)
     total_chars = sum(e.get("chars", 0) for e in history)
 
+    days_label = tr("%d Tage", "%d days")
     rows = [
-        ("Tests gesamt", fmt_num(len(history))),
-        ("Übungszeit gesamt", fmt_duration(sum(days.values()))),
-        ("Richtig getippte Zeichen", fmt_num(total_chars)),
-        ("Ø Tempo (letzte 10)", "%s WPM" % fmt_num(stats.average(e["wpm"] for e in last10))),
-        ("Ø Genauigkeit (letzte 10)", "%s %%" % fmt_num(stats.average(e["acc"] for e in last10), 1)),
-        ("Ø Tempo (alle)", "%s WPM" % fmt_num(stats.average(e["wpm"] for e in history))),
+        (tr("Tests gesamt", "Total tests"), fmt_num(len(history))),
+        (tr("Übungszeit gesamt", "Total practice time"), fmt_duration(sum(days.values()))),
+        (tr("Richtig getippte Zeichen", "Correct characters"), fmt_num(total_chars)),
+        (tr("Ø Tempo (letzte 10)", "Avg speed (last 10)"),
+         "%s WPM" % fmt_num(stats.average(e["wpm"] for e in last10))),
+        (tr("Ø Genauigkeit (letzte 10)", "Avg accuracy (last 10)"),
+         "%s %%" % fmt_num(stats.average(e["acc"] for e in last10), 1)),
+        (tr("Ø Tempo (alle)", "Avg speed (all)"), "%s WPM" % fmt_num(stats.average(e["wpm"] for e in history))),
     ]
     if best:
-        rows.append(("Bestes Tempo", "%d WPM  %s(%s, %s)%s" % (
+        rows.append((tr("Bestes Tempo", "Best speed"), "%d WPM  %s(%s, %s)%s" % (
             round(best["wpm"]), DIM, best.get("label", best["mode"]),
             fmt_date(stats.entry_date(best)), RESET)))
     rows += [
-        ("Aktive Tage", fmt_num(len(days))),
-        ("Aktuelle Serie", "%d Tage" % current),
-        ("Längste Serie", "%d Tage" % longest),
-        ("Heute", "%s · %d Tests" % (fmt_duration(days.get(today, 0)), tests_today)),
-        ("Diese Woche", fmt_duration(week)),
+        (tr("Aktive Tage", "Active days"), fmt_num(len(days))),
+        (tr("Aktuelle Serie", "Current streak"), days_label % current),
+        (tr("Längste Serie", "Longest streak"), days_label % longest),
+        (tr("Heute", "Today"), "%s · %d Tests" % (fmt_duration(days.get(today, 0)), tests_today)),
+        (tr("Diese Woche", "This week"), fmt_duration(week)),
     ]
     return [DIM + pad(name, 28) + RESET + BRIGHT + value + RESET for name, value in rows]
 
@@ -544,9 +612,10 @@ def overview_lines(store, width):
 def records_lines(store, width):
     best = stats.records(store.history)
     if not best:
-        return [DIM + "Noch keine Rekorde." + RESET]
+        return [DIM + tr("Noch keine Rekorde.", "No records yet.") + RESET]
     label_w = min(40, max(vlen(e.get("label", k)) for k, e in best.items()) + 2)
-    lines = [DIM + pad("Modus", label_w) + pad("Rekord", 12) + pad("Genauigkeit", 14) + "Datum" + RESET]
+    lines = [DIM + pad(tr("Modus", "Mode"), label_w) + pad(tr("Rekord", "Record"), 12)
+             + pad(tr("Genauigkeit", "Accuracy"), 14) + tr("Datum", "Date") + RESET]
     for key in sorted(best, key=stats.mode_sort_key):
         e = best[key]
         lines.append(pad(e.get("label", key)[:label_w - 1], label_w)
@@ -559,26 +628,27 @@ def records_lines(store, width):
 def history_lines(store, width):
     history = store.history
     if not history:
-        return [DIM + "Noch kein Verlauf." + RESET]
+        return [DIM + tr("Noch kein Verlauf.", "No history yet.") + RESET]
     count = max(5, width - 8)
     recent = history[-count:]
     wpms = [e["wpm"] for e in recent]
-    lines = [DIM + "Tempo der letzten %d Tests (WPM)" % len(recent) + RESET, ""]
+    lines = [DIM + tr("Tempo der letzten %d Tests (WPM)", "Speed of the last %d tests (WPM)")
+             % len(recent) + RESET, ""]
     lines += bar_chart(wpms, 8)
     lines.append("")
     accs = [e["acc"] for e in recent]
-    lines.append(DIM + "Genauigkeit  " + RESET + GOOD + sparkline([max(0, a - 80) for a in accs]) + RESET
+    lines.append(DIM + tr("Genauigkeit  ", "Accuracy  ") + RESET + GOOD + sparkline([max(0, a - 80) for a in accs]) + RESET
                  + DIM + "  (80–100 %)" + RESET)
     last10 = stats.average(e["wpm"] for e in history[-10:])
     lines.append("")
-    summary = "Ø letzte 10: " + BRIGHT + fmt_num(last10) + RESET
+    summary = tr("Ø letzte 10: ", "Avg last 10: ") + BRIGHT + fmt_num(last10) + RESET
     if len(history) >= 20:
         before = stats.average(e["wpm"] for e in history[-20:-10])
         diff = last10 - before
         arrow = (GOOD + "▲ +" if diff >= 0 else BAD + "▼ ") + fmt_num(diff, 1) + " WPM" + RESET
         summary += DIM + "  ·  Trend " + RESET + arrow
     if len(history) >= 50:
-        summary += DIM + "  ·  Ø letzte 50: " + RESET + fmt_num(stats.average(e["wpm"] for e in history[-50:]))
+        summary += DIM + tr("  ·  Ø letzte 50: ", "  ·  Avg last 50: ") + RESET + fmt_num(stats.average(e["wpm"] for e in history[-50:]))
     lines.append(summary)
     return lines
 
@@ -607,7 +677,7 @@ def _key_color(rate):
 
 
 def keyboard_lines(store, width):
-    lang = store.settings["language"]
+    lang = store.settings["kb_layout"]
     merged = stats.merged_key_stats(store.key_stats)
     shift = dict(SHIFTED[lang])
     if lang == "de":
@@ -623,28 +693,32 @@ def keyboard_lines(store, width):
         a, e = per_key.get(key, (0, 0))
         return e / a if a >= 5 else None
 
-    lines = [DIM + "Fehlerquote je Taste (Umschalt- und AltGr-Zeichen zählen zur Grundtaste)" + RESET, ""]
+    lines = [DIM + tr("Fehlerquote je Taste (Umschalt- und AltGr-Zeichen zählen zur Grundtaste)",
+                      "Error rate per key (shifted and AltGr characters count for the base key)")
+             + RESET, ""]
     for row, indent in KEYBOARDS[lang]:
         cells = [_key_color(rate(k)) + " " + (k.upper() if len(k.upper()) == 1 else k) + " " + RESET
                  for k in row]
         lines.append(" " * indent + " ".join(cells))
     space_rate = rate(" ")
-    lines.append(" " * 12 + _key_color(space_rate) + " " * 22 + RESET + DIM + "  Leertaste" + RESET)
+    lines.append(" " * 12 + _key_color(space_rate) + " " * 22 + RESET + DIM
+                 + tr("  Leertaste", "  space") + RESET)
     lines.append("")
     lines.append(_key_color(0.0) + " < 3 % " + RESET + " " + _key_color(0.05) + " < 7 % " + RESET + " "
                  + _key_color(0.1) + " < 12 % " + RESET + " " + _key_color(0.5) + " ≥ 12 % " + RESET
-                 + " " + DIM + "grau = zu wenig Daten" + RESET)
+                 + " " + DIM + tr("grau = zu wenig Daten", "gray = not enough data") + RESET)
     lines.append("")
     weak = stats.weak_keys(store.key_stats, count=8, min_attempts=10, include_space=True)
     if weak:
-        lines.append(DIM + "Schwächste Tasten" + RESET)
+        lines.append(DIM + tr("Schwächste Tasten", "Weakest keys") + RESET)
         for ch, attempts, errors, r in weak:
-            name = "Leertaste" if ch == " " else ch
+            name = tr("Leertaste", "space") if ch == " " else ch
             lines.append("  " + BAD + BRIGHT + pad(name, 10) + RESET
                          + progress_bar(min(1, r * 4), 12, BAD)
-                         + " %s %%  %s(%d von %d)%s" % (fmt_num(r * 100, 1), DIM, errors, attempts, RESET))
+                         + " %s %%  %s(%d %s %d)%s" % (fmt_num(r * 100, 1), DIM, errors,
+                                                       tr("von", "of"), attempts, RESET))
     else:
-        lines.append(DIM + "Noch zu wenig Daten für eine Auswertung." + RESET)
+        lines.append(DIM + tr("Noch zu wenig Daten für eine Auswertung.", "Not enough data yet.") + RESET)
     return lines
 
 
@@ -660,10 +734,10 @@ def tab_screen(term, title, tabs, index=0):
         room = max(3, rows - 8)
         scroll = max(0, min(scroll, len(body) - room))
         lines = title_block(title, width=width) + ["  ".join(bar), ""] + body[scroll:scroll + room]
-        footer = "←→ Bereich wechseln"
+        footer = tr("←→ Bereich wechseln", "←→ switch tab")
         if len(body) > room:
-            footer += " · ↑↓ scrollen"
-        footer += " · Esc zurück"
+            footer += tr(" · ↑↓ scrollen", " · ↑↓ scroll")
+        footer += tr(" · Esc zurück", " · Esc back")
         draw(term, frame(term, lines, footer, width))
         key = term.read_key(ui.tick())
         if key in (T.RIGHT, T.TAB, "l"):
@@ -680,12 +754,12 @@ def tab_screen(term, title, tabs, index=0):
 
 def stats_screen(term, store):
     tabs = [
-        ("Übersicht", lambda w: overview_lines(store, w)),
-        ("Rekorde", lambda w: records_lines(store, w)),
-        ("Verlauf", lambda w: history_lines(store, w)),
-        ("Tastatur", lambda w: keyboard_lines(store, w)),
+        (tr("Übersicht", "Overview"), lambda w: overview_lines(store, w)),
+        (tr("Rekorde", "Records"), lambda w: records_lines(store, w)),
+        (tr("Verlauf", "History"), lambda w: history_lines(store, w)),
+        (tr("Tastatur", "Keyboard"), lambda w: keyboard_lines(store, w)),
     ]
-    tab_screen(term, "Statistik & Rekorde", tabs)
+    tab_screen(term, tr("Statistik & Rekorde", "Stats & records"), tabs)
 
 
 # --- Aktivitätskalender -------------------------------------------------------
@@ -708,7 +782,7 @@ def activity_lines(store, width, offset_weeks=0, today=None):
     for col in range(weeks):
         month = (start + timedelta(weeks=col)).month
         if month != prev_month:
-            name = MONTHS[month - 1]
+            name = months()[month - 1]
             pos = col * 2
             if pos >= free_from and pos + len(name) <= len(label_row):
                 label_row[pos:pos + len(name)] = list(name)
@@ -717,7 +791,7 @@ def activity_lines(store, width, offset_weeks=0, today=None):
     lines = [DIM + "    " + "".join(label_row).rstrip() + RESET]
 
     for row in range(7):
-        name = WEEKDAYS[row] if row in (0, 2, 4, 6) else ""
+        name = weekdays()[row] if row in (0, 2, 4, 6) else ""
         cells = []
         for col in range(weeks):
             d = start + timedelta(days=col * 7 + row)
@@ -729,31 +803,34 @@ def activity_lines(store, width, offset_weeks=0, today=None):
 
     legend = " ".join(heat_cell(level, mode) for level in range(5))
     lines.append("")
-    lines.append(DIM + "    Weniger " + RESET + legend + DIM + " Mehr" + RESET)
-    lines.append(DIM + "    Stufen: unter ½ Tagesziel · unter Tagesziel · Ziel erreicht · doppeltes Ziel"
+    lines.append(DIM + tr("    Weniger ", "    Less ") + RESET + legend + DIM + tr(" Mehr", " More") + RESET)
+    lines.append(DIM + tr("    Stufen: unter ½ Tagesziel · unter Tagesziel · Ziel erreicht · doppeltes Ziel",
+                          "    Levels: under ½ daily goal · under goal · goal reached · double goal")
                  + RESET)
     lines.append("")
 
     in_range = [d for d in days if start <= d <= end]
     current, longest = stats.streaks(days, today)
-    lines.append("Zeitraum " + BRIGHT + "%s – %s" % (fmt_date(start), fmt_date(end)) + RESET)
-    lines.append(BRIGHT + "%d" % len(in_range) + RESET + " aktive Tage  ·  "
-                 + BRIGHT + fmt_duration(sum(days[d] for d in in_range)) + RESET + " Übung  ·  "
+    lines.append(tr("Zeitraum ", "Period ") + BRIGHT + "%s – %s" % (fmt_date(start), fmt_date(end)) + RESET)
+    lines.append(BRIGHT + "%d" % len(in_range) + RESET + tr(" aktive Tage  ·  ", " active days  ·  ")
+                 + BRIGHT + fmt_duration(sum(days[d] for d in in_range)) + RESET
+                 + tr(" Übung  ·  ", " practice  ·  ")
                  + BRIGHT + "%d" % sum(tests.get(d, 0) for d in in_range) + RESET + " Tests")
-    lines.append("Aktuelle Serie " + GOLD + "%d" % current + RESET + "  ·  Längste Serie "
-                 + BRIGHT + "%d" % longest + RESET + "  ·  Tagesziel %d min" % (goal // 60))
+    lines.append(tr("Aktuelle Serie ", "Current streak ") + GOLD + "%d" % current + RESET
+                 + tr("  ·  Längste Serie ", "  ·  Longest streak ") + BRIGHT + "%d" % longest + RESET
+                 + tr("  ·  Tagesziel %d min", "  ·  Daily goal %d min") % (goal // 60))
 
     week_start = today - timedelta(days=today.weekday())
     week = []
     for i in range(7):
         d = week_start + timedelta(days=i)
         if d > today:
-            week.append(DIM + WEEKDAYS[i] + " –" + RESET)
+            week.append(DIM + weekdays()[i] + " –" + RESET)
         else:
             minutes = days.get(d, 0) / 60
             color = GOOD if days.get(d, 0) >= goal else TEXT if minutes else DIM
-            week.append(DIM + WEEKDAYS[i] + " " + RESET + color + fmt_num(minutes) + RESET)
-    lines.append("Diese Woche (min)  " + "  ".join(week))
+            week.append(DIM + weekdays()[i] + " " + RESET + color + fmt_num(minutes) + RESET)
+    lines.append(tr("Diese Woche (min)  ", "This week (min)  ") + "  ".join(week))
     return lines
 
 
@@ -761,9 +838,10 @@ def activity_screen(term, store):
     offset = 0
     while True:
         width = content_width(term, 112)
-        lines = title_block("Aktivität", "an welchen Tagen du geübt hast", width)
+        lines = title_block(tr("Aktivität", "Activity"),
+                            tr("an welchen Tagen du geübt hast", "the days you practiced"), width)
         lines += [""] + activity_lines(store, width, offset)
-        footer = "←→ Zeitraum verschieben · Esc zurück"
+        footer = tr("←→ Zeitraum verschieben · Esc zurück", "←→ move period · Esc back")
         draw(term, frame(term, lines, footer, width))
         key = term.read_key(ui.tick())
         weeks = max(4, min(53, (width - 4) // 2))
@@ -784,11 +862,13 @@ def achievements_screen(term, store):
         width = content_width(term)
         total = len(stats.ACHIEVEMENTS)
         got = len(store.achievements)
-        lines = title_block("Erfolge", "%d von %d freigeschaltet" % (got, total), width)
+        lines = title_block(tr("Erfolge", "Achievements"),
+                            tr("%d von %d freigeschaltet", "%d of %d unlocked") % (got, total), width)
         lines.append(progress_bar(got / total, min(40, width), GOLD))
         lines.append("")
         body = []
-        for key, name, desc in stats.ACHIEVEMENTS:
+        for key, _, _ in stats.ACHIEVEMENTS:
+            name, desc = stats.achievement_text(key)
             if key in store.achievements:
                 when = store.achievements[key][:10]
                 try:
@@ -801,7 +881,7 @@ def achievements_screen(term, store):
         room = max(3, rows - len(lines) - 4)
         scroll = max(0, min(scroll, len(body) - room))
         lines += body[scroll:scroll + room]
-        footer = ("↑↓ scrollen · " if len(body) > room else "") + "Esc zurück"
+        footer = (tr("↑↓ scrollen · ", "↑↓ scroll · ") if len(body) > room else "") + tr("Esc zurück", "Esc back")
         draw(term, frame(term, lines, footer))
         key = term.read_key(ui.tick())
         if key in (T.DOWN, "j"):
@@ -814,76 +894,116 @@ def achievements_screen(term, store):
 
 # --- Einstellungen ------------------------------------------------------------
 
-SETTINGS_UI = (
-    ("language", "Sprache der Texte", {"de": "Deutsch", "en": "Englisch"},
-     "Sprache für Wörter, Sätze und Zitate. Rekorde werden je Sprache geführt."),
-    ("difficulty", "Wortlänge", {"easy": "kurze Wörter", "normal": "gemischt", "hard": "lange Wörter"},
-     "Welche Wörter in Zeit-, Wörter- und freien Tests vorkommen."),
-    ("punctuation", "Satzzeichen", ON_OFF,
-     "Fügt in Zeit-, Wörter- und freien Tests Kommas, Punkte, Klammern … ein."),
-    ("numbers", "Zahlen", ON_OFF, "Mischt in Zeit-, Wörter- und freien Tests Zahlen unter die Wörter."),
-    ("lowercase", "Nur Kleinbuchstaben", ON_OFF, "Schreibt alle Wörter klein (Satzanfänge bleiben groß)."),
-    ("umlauts", "Umlaute & ß", {True: "tippen", False: "ersetzen (ae, oe, ue, ss)"},
-     "Praktisch, wenn deine Tastatur keine deutschen Umlaute hat."),
-    ("strict", "Fehler", {False: "weitertippen erlaubt", True: "müssen korrigiert werden"},
-     "Im strengen Modus geht es erst weiter, wenn das richtige Zeichen getippt ist."),
-    None,
-    ("live_wpm", "Live-WPM anzeigen", ON_OFF, "Zeigt das Tempo schon während des Tippens."),
-    ("cursor", "Cursor", {"block": "Block", "underline": "Unterstrich"}, "Wie die aktuelle Stelle markiert wird."),
-    ("visible_lines", "Sichtbare Zeilen", str, "Wie viele Textzeilen gleichzeitig zu sehen sind."),
-    ("text_width", "Textbreite", lambda v: "%d Zeichen" % v, "Maximale Breite einer Textzeile."),
-    ("bell", "Ton bei Fehlern", ON_OFF, "Lässt bei jedem Tippfehler die Terminal-Glocke klingen."),
-    ("background", "Hintergrund", {k: v[0] for k, v in ui.BACKGROUNDS.items()},
-     "Färbt das Terminal beim Start ein – beim Beenden kommt dein Hintergrund zurück."),
-    ("color_mode", "Farbmodus", {"256": "256 Farben", "truecolor": "True Color",
-                                 "basic": "Basis (16 Farben)"},
-     "True Color ist am schönsten. Falls Farben komisch aussehen, nimm 256 Farben."),
-    ("animations", "Bewegte Farben", ON_OFF, "Fließende Farbverläufe und leuchtende Tasten."),
-    ("keyboard", "Tastatur beim Tippen", ON_OFF,
-     "Zeigt unter dem Text eine Tastatur, auf der die nächste Taste leuchtet."),
-    None,
-    ("daily_goal", "Tagesziel", lambda v: "%d min" % v,
-     "Wie lange du pro Tag üben möchtest. Bestimmt auch die Kalenderfarben."),
-)
+def settings_ui():
+    """(Schlüssel, Name, Anzeige des Werts, Hinweis); None = Abstand."""
+    return (
+        ("ui_language", tr("Sprache", "Language"), {"en": "English", "de": "Deutsch"},
+         tr("Sprache von KeyFlow und der Übungstexte.", "Language of KeyFlow and of the practice texts.")),
+        ("language", tr("Sprache der Texte", "Text language"),
+         {"de": tr("Deutsch", "German"), "en": tr("Englisch", "English")},
+         tr("Sprache für Wörter, Sätze, Zitate und Geschichten. Rekorde werden je Sprache geführt.",
+            "Language of words, sentences, quotes and stories. Records are kept per language.")),
+        ("kb_layout", tr("Tastaturlayout", "Keyboard layout"),
+         {"de": tr("QWERTZ (Deutsch)", "QWERTZ (German)"), "en": "QWERTY (US)"},
+         tr("Welche Tastatur beim Tippen angezeigt wird.", "Which keyboard is shown while you type.")),
+        ("difficulty", tr("Wortlänge", "Word length"),
+         {"easy": tr("kurze Wörter", "short words"), "normal": tr("gemischt", "mixed"),
+          "hard": tr("lange Wörter", "long words")},
+         tr("Welche Wörter in Zeit-, Wörter- und freien Tests vorkommen.",
+            "Which words appear in time, word and free tests.")),
+        ("punctuation", tr("Satzzeichen", "Punctuation"), on_off,
+         tr("Fügt in Zeit-, Wörter- und freien Tests Kommas, Punkte, Klammern … ein.",
+            "Adds commas, periods, brackets … to time, word and free tests.")),
+        ("numbers", tr("Zahlen", "Numbers"), on_off,
+         tr("Mischt in Zeit-, Wörter- und freien Tests Zahlen unter die Wörter.",
+            "Mixes numbers into time, word and free tests.")),
+        ("lowercase", tr("Nur Kleinbuchstaben", "Lowercase only"), on_off,
+         tr("Schreibt alle Wörter klein (Satzanfänge bleiben groß).",
+            "Writes all words in lowercase (sentence starts stay capitalized).")),
+        ("umlauts", tr("Umlaute & ß", "Umlauts & ß"),
+         {True: tr("tippen", "type them"), False: tr("ersetzen (ae, oe, ue, ss)", "replace (ae, oe, ue, ss)")},
+         tr("Praktisch, wenn deine Tastatur keine deutschen Umlaute hat.",
+            "Handy if your keyboard has no German umlauts.")),
+        ("strict", tr("Fehler", "Mistakes"),
+         {False: tr("weitertippen erlaubt", "keep typing"), True: tr("müssen korrigiert werden", "must be fixed")},
+         tr("Im strengen Modus geht es erst weiter, wenn das richtige Zeichen getippt ist.",
+            "In strict mode you only move on once the correct character is typed.")),
+        None,
+        ("live_wpm", tr("Live-WPM anzeigen", "Show live WPM"), on_off,
+         tr("Zeigt das Tempo schon während des Tippens.", "Shows your speed while you type.")),
+        ("cursor", "Cursor", {"block": "Block", "underline": tr("Unterstrich", "Underline")},
+         tr("Wie die aktuelle Stelle markiert wird.", "How the current position is marked.")),
+        ("visible_lines", tr("Sichtbare Zeilen", "Visible lines"), str,
+         tr("Wie viele Textzeilen gleichzeitig zu sehen sind.", "How many lines of text are visible.")),
+        ("text_width", tr("Textbreite", "Text width"), lambda v: tr("%d Zeichen", "%d characters") % v,
+         tr("Maximale Breite einer Textzeile.", "Maximum width of a line of text.")),
+        ("bell", tr("Ton bei Fehlern", "Sound on mistakes"), on_off,
+         tr("Lässt bei jedem Tippfehler die Terminal-Glocke klingen.", "Rings the terminal bell on every mistake.")),
+        ("background", tr("Hintergrund", "Background"), lambda v: pick(ui.BACKGROUNDS[v][0]),
+         tr("Färbt das Terminal beim Start ein – beim Beenden kommt dein Hintergrund zurück.",
+            "Colors the terminal on start – your own background returns when you quit.")),
+        ("color_mode", tr("Farbmodus", "Color mode"),
+         {"256": tr("256 Farben", "256 colors"), "truecolor": "True Color",
+          "basic": tr("Basis (16 Farben)", "Basic (16 colors)")},
+         tr("True Color ist am schönsten. Falls Farben komisch aussehen, nimm 256 Farben.",
+            "True Color looks best. If colors look odd, use 256 colors.")),
+        ("animations", tr("Bewegte Farben", "Moving colors"), on_off,
+         tr("Fließende Farbverläufe und leuchtende Tasten.", "Flowing gradients and glowing keys.")),
+        ("keyboard", tr("Tastatur beim Tippen", "Keyboard while typing"), on_off,
+         tr("Zeigt unter dem Text eine Tastatur, auf der die nächste Taste leuchtet.",
+            "Shows a keyboard under the text where the next key lights up.")),
+        None,
+        ("daily_goal", tr("Tagesziel", "Daily goal"), lambda v: "%d min" % v,
+         tr("Wie lange du pro Tag üben möchtest. Bestimmt auch die Kalenderfarben.",
+            "How long you want to practice per day. Also sets the calendar colors.")),
+    )
 
 
 LOOK_SETTINGS = ("background", "color_mode", "animations")
 
 
-def settings_screen(term, store, on_look_change=None):
+def settings_screen(term, store, on_look_change=None, on_language_change=None):
     settings = store.settings
-
-    def setter(key):
-        def change(value):
-            settings[key] = value
-            store.save()
-            if key in LOOK_SETTINGS and on_look_change:
-                on_look_change()
-        return change
-
-    items = []
-    for entry in SETTINGS_UI:
-        if entry is None:
-            items.append(Item.sep())
-            continue
-        key, label, fmt, hint = entry
-        items.append(Item(label, options=storage.SETTING_OPTIONS[key], value=settings[key],
-                          fmt=fmt, on_change=setter(key), hint=hint))
-    items += [
-        Item.sep(),
-        Item("Statistiken zurücksetzen", action="reset",
-             hint="Löscht Verlauf, Rekorde, Tastenstatistik und Erfolge. Eigene Texte bleiben."),
-        Item("Zurück", action="back"),
-    ]
-    width = content_width(term)
     index = 0
     while True:
+        def setter(key):
+            def change(value):
+                settings[key] = value
+                store.save()
+                if key == "ui_language" and on_language_change:
+                    on_language_change(value)
+                if key in LOOK_SETTINGS and on_look_change:
+                    on_look_change()
+            return change
+
+        items = []
+        for entry in settings_ui():
+            if entry is None:
+                items.append(Item.sep())
+                continue
+            key, label, fmt, hint = entry
+            items.append(Item(label, options=storage.SETTING_OPTIONS[key], value=settings[key],
+                              fmt=fmt, on_change=setter(key), hint=hint,
+                              refresh=key == "ui_language"))
+        items += [
+            Item.sep(),
+            Item(tr("Statistiken zurücksetzen", "Reset statistics"), action="reset",
+                 hint=tr("Löscht Verlauf, Rekorde, Tastenstatistik und Erfolge. Eigene Texte bleiben.",
+                         "Deletes history, records, key stats and achievements. Your own texts stay.")),
+            Item(tr("Zurück", "Back"), action="back"),
+        ]
+        width = content_width(term)
         action, index, _ = run_menu(
-            term, lambda: title_block("Einstellungen", "Datei: %s" % store.path, width), items, index,
-            footer="↑↓ auswählen · ←→/Enter ändern · Esc zurück", width=width)
+            term, lambda: title_block(tr("Einstellungen", "Settings"),
+                                      tr("Datei: %s", "File: %s") % store.path, width), items, index,
+            footer=tr("↑↓ auswählen · ←→/Enter ändern · Esc zurück", "↑↓ choose · ←→/Enter change · Esc back"),
+            width=width)
+        if action == ui.REFRESH:
+            continue
         if action == "reset":
-            if confirm(term, "Statistiken zurücksetzen",
-                       "Wirklich den gesamten Verlauf, alle Rekorde und Erfolge löschen?"):
+            if confirm(term, tr("Statistiken zurücksetzen", "Reset statistics"),
+                       tr("Wirklich den gesamten Verlauf, alle Rekorde und Erfolge löschen?",
+                          "Really delete your whole history, all records and achievements?")):
                 store.reset_stats()
             continue
         return
@@ -898,20 +1018,25 @@ def stories_menu(term, store, level, index=0):
         if sid and e["wpm"] > best.get(sid, 0):
             best[sid] = e["wpm"]
     items = []
-    for i, (title, text) in enumerate(stories.STORIES[level]):
+    lang = store.settings["language"]
+    items_list = stories.stories_for(lang, level)
+    for i, (title, text) in enumerate(items_list):
         sid = stories.story_id(level, i)
-        mark = (GOOD + "✓ " + RESET + DIM + "%d WPM · " % round(best[sid])) if sid in best else DIM + "neu · "
+        mark = (GOOD + "✓ " + RESET + DIM + "%d WPM · " % round(best[sid])) if sid in best \
+            else DIM + tr("neu · ", "new · ")
         items.append(Item("%2d. %s" % (i + 1, title), action=i,
-                          right=mark + "%d Zeichen" % len(text) + RESET,
+                          right=mark + tr("%d Zeichen", "%d chars") % len(text) + RESET,
                           hint=text[:66] + " …"))
-    items += [Item.sep(), Item("Zurück", action="back")]
-    done = sum(1 for i in range(len(stories.STORIES[level])) if stories.story_id(level, i) in best)
+    items += [Item.sep(), Item(tr("Zurück", "Back"), action="back")]
+    done = sum(1 for i in range(len(items_list)) if stories.story_id(level, i) in best)
     width = content_width(term)
+
     def header():
-        return title_block("Geschichten – %s" % stories.LEVEL_LABELS[level],
-                           "%d von %d geschafft · auf Deutsch" % (done, len(stories.STORIES[level])), width)
+        return title_block(tr("Geschichten – %s", "Stories – %s") % stories.level_label(level),
+                           tr("%d von %d geschafft", "%d of %d done") % (done, len(items_list)), width)
     return run_menu(term, header, items, index,
-                    footer="↑↓ auswählen · Enter tippen · Esc zurück", width=width)
+                    footer=tr("↑↓ auswählen · Enter tippen · Esc zurück", "↑↓ choose · Enter type · Esc back"),
+                    width=width)
 
 
 # --- Eigene Texte -------------------------------------------------------------
@@ -920,22 +1045,47 @@ def custom_menu(term, store, index=0):
     items = []
     for i, entry in enumerate(store.custom_texts):
         text = entry["text"]
-        right = "%s Zeichen" % fmt_num(len(text))
+        right = tr("%s Zeichen", "%s chars") % fmt_num(len(text))
         if len(text) > 600:
             right += " · %d %%" % (100 * entry.get("pos", 0) // len(text))
         title = entry.get("title") or text[:30]
         items.append(Item(title[:34], action=i, right=right,
-                          hint="Enter üben · Entf/D löschen"))
+                          hint=tr("Enter üben · Entf/D löschen", "Enter practice · Del/D delete")))
     if items:
         items.append(Item.sep())
     items += [
-        Item("+ Text einfügen", action="new", hint="Text aus der Zwischenablage einfügen."),
-        Item("+ Aus Datei laden", action="file", hint="Eine .txt-Datei laden (UTF-8)."),
-        Item("Zurück", action="back"),
+        Item(tr("+ Text einfügen", "+ Paste text"), action="new",
+             hint=tr("Text aus der Zwischenablage einfügen.", "Paste a text from the clipboard.")),
+        Item(tr("+ Aus Datei laden", "+ Load from file"), action="file",
+             hint=tr("Eine .txt-Datei laden (UTF-8).", "Load a .txt file (UTF-8).")),
+        Item(tr("Zurück", "Back"), action="back"),
     ]
     width = content_width(term)
     def header():
-        return title_block("Eigener Text", "lange Texte werden in Abschnitten geübt", width)
+        return title_block(tr("Eigener Text", "Your own text"),
+                           tr("lange Texte werden in Abschnitten geübt", "long texts are practiced in parts"), width)
     return run_menu(term, header, items, index,
-                    footer="↑↓ auswählen · Enter üben · Entf/D löschen · Esc zurück",
+                    footer=tr("↑↓ auswählen · Enter üben · Entf/D löschen · Esc zurück",
+                              "↑↓ choose · Enter practice · Del/D delete · Esc back"),
                     extra_keys=(T.DELETE, "d", "D"), width=width)
+
+
+# --- Sprache beim ersten Start -------------------------------------------------
+
+def language_picker(term):
+    """Fragt beim allerersten Start nach der Sprache. Gibt "en" oder "de" zurück."""
+    items = [Item("English", action="en", hint="KeyFlow will be in English."),
+             Item("Deutsch", action="de", hint="KeyFlow wird auf Deutsch sein.")]
+    width = content_width(term)
+
+    def header():
+        return [ui.gradient(TITLE) + DIM + "  made by yns.laf" + RESET,
+                DIM + "─" * width + RESET, "",
+                BRIGHT + "Choose your language" + RESET + DIM + "  ·  " + RESET
+                + BRIGHT + "Wähle deine Sprache" + RESET, ""]
+
+    while True:
+        action, _, _ = run_menu(term, header, items, 0, numbered=True,
+                                footer="↑↓ · Enter", width=width)
+        if action in ("en", "de"):
+            return action

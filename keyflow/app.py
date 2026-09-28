@@ -7,10 +7,12 @@ import time
 from datetime import date, datetime
 from pathlib import Path
 
-from . import screens, stats, stories, textgen, ui
+from . import i18n, screens, stats, stories, textgen, ui
 from . import terminal as T
 from .engine import TypingTest
+from .i18n import tr
 from .storage import Store
+from . import __version__
 
 
 ENDLESS_START = 10.0         # Startzeit im Unendlich-Modus (Sekunden)
@@ -53,6 +55,7 @@ class App:
         self.term = term
         self.store = store
         self.rng = rng or random.Random()
+        i18n.set_language(store.settings["ui_language"])
 
     # --- Hauptschleife ---------------------------------------------------
     def apply_look(self):
@@ -61,10 +64,25 @@ class App:
         _, rgb, opacity = ui.BACKGROUNDS[self.settings["background"]]
         self.term.set_background(rgb, opacity)
 
+    def set_ui_language(self, lang):
+        """Oberfläche und Übungstexte auf eine Sprache umstellen."""
+        i18n.set_language(lang)
+        self.settings["ui_language"] = lang
+        self.settings["language"] = lang
+        self.store.save()
+
     def run(self):
         self.apply_look()
+        if self.store.needs_language:
+            lang = screens.language_picker(self.term)
+            self.settings["kb_layout"] = lang
+            self.set_ui_language(lang)
+            self.store.needs_language = False
         if self.store.load_error:
-            ui.message(self.term, "Hinweis", [self.store.load_error])
+            path, error, backup = self.store.load_error
+            ui.message(self.term, tr("Hinweis", "Note"), [
+                tr("Die Datei %s war beschädigt (%s) und wurde nach %s verschoben.",
+                   "The file %s was damaged (%s) and was moved to %s.") % (path, error, backup)])
         self.update_achievements()
         index = 0
         while True:
@@ -74,7 +92,8 @@ class App:
             if action == "quick":
                 self.open(self.settings["menu"]["last"])
             elif action == "settings":
-                screens.settings_screen(self.term, self.store, on_look_change=self.apply_look)
+                screens.settings_screen(self.term, self.store, on_look_change=self.apply_look,
+                                        on_language_change=self.set_ui_language)
             else:
                 self.category(action)
 
@@ -118,9 +137,9 @@ class App:
         key = s["language"] + ("-p" if s["punctuation"] else "") + ("-n" if s["numbers"] else "")
         label = s["language"].upper()
         if s["punctuation"]:
-            label += " · Satzzeichen"
+            label += tr(" · Satzzeichen", " · punctuation")
         if s["numbers"]:
-            label += " · Zahlen"
+            label += tr(" · Zahlen", " · numbers")
         return key, label
 
     def _word_source(self):
@@ -149,11 +168,11 @@ class App:
         up = lang.upper()
         if action == "time":
             variant, label = self._word_variant()
-            return Mode("zeit-%d-%s" % (value, variant), "Zeit %d s · %s" % (value, label),
+            return Mode("zeit-%d-%s" % (value, variant), tr("Zeit %d s · %s", "Time %d s · %s") % (value, label),
                         "time", limit=value, source=self._word_source())
         if action == "words":
             variant, label = self._word_variant()
-            return Mode("woerter-%d-%s" % (value, variant), "%d Wörter · %s" % (value, label),
+            return Mode("woerter-%d-%s" % (value, variant), "%s · %s" % (screens.words_label(value), label),
                         "text", make_text=self._fixed(self._word_source, value), count_words=True)
         if action == "free":
             if value == "words":
@@ -161,44 +180,51 @@ class App:
             else:
                 variant, label = lang, up
             return Mode("frei-%s-%s" % (value, variant),
-                        "Freier Modus · %s · %s" % (screens.FREE_LABELS[value], label),
+                        tr("Freier Modus · %s · %s", "Free mode · %s · %s") % (screens.free_label(value), label),
                         "free", source=self._free_source(value))
         if action == "endless":
             source = textgen.EndlessSource(lang, rng=self.rng)
-            mode = Mode("unendlich-%d-%s" % (value, lang), "Unendlich ab Level %d · %s" % (value, up),
+            mode = Mode("unendlich-%d-%s" % (value, lang),
+                        tr("Unendlich ab Level %d · %s", "Endless from level %d · %s") % (value, up),
                         "endless", limit=value, source=source)
             mode.extra = lambda: {"score": mode.state["words"], "level": mode.state["level"]}
             return mode
         if action == "sentences":
             return Mode("saetze-%d-%s" % (value, lang), "%s · %s" % (
-                "1 Satz" if value == 1 else "%d Sätze" % value, up), "text",
+                tr("1 Satz", "1 sentence") if value == 1 else tr("%d Sätze", "%d sentences") % value, up),
+                "text",
                 make_text=self._fixed(lambda: textgen.SentenceSource(lang, rng=self.rng), value))
         if action == "numbers":
-            return Mode("zahlen-%d-%s" % (value, lang), "Zahlen %d · %s" % (value, up), "text",
+            return Mode("zahlen-%d-%s" % (value, lang), tr("Zahlen %d · %s", "Numbers %d · %s") % (value, up),
+                        "text",
                         make_text=self._fixed(lambda: textgen.NumberSource(lang, rng=self.rng), value))
         if action == "symbols":
-            return Mode("zeichen-%d-%s" % (value, lang), "Sonderzeichen %d · %s" % (value, up), "text",
+            return Mode("zeichen-%d-%s" % (value, lang), tr("Sonderzeichen %d · %s", "Symbols %d · %s")
+                        % (value, up), "text",
                         make_text=self._fixed(lambda: textgen.SymbolSource(lang, rng=self.rng), value))
         if action == "mixed":
-            return Mode("gemischt-%d-%s" % (value, lang), "Gemischt %d · %s" % (value, up), "text",
+            return Mode("gemischt-%d-%s" % (value, lang), tr("Gemischt %d · %s", "Mixed %d · %s") % (value, up),
+                        "text",
                         make_text=self._fixed(lambda: textgen.MixedSource(
                             lang, self.settings["difficulty"], rng=self.rng), value))
         if action == "quotes":
             def make_quote():
                 text, source = textgen.pick_quote(lang, value, self.rng)
                 return text, "— " + source
-            return Mode("zitat-%s-%s" % (value, lang), "Zitat (%s) · %s" % (
-                screens.QUOTE_LABELS[value], up), "text", make_text=make_quote)
+            return Mode("zitat-%s-%s" % (value, lang), tr("Zitat (%s) · %s", "Quote (%s) · %s") % (
+                screens.quote_label(value), up), "text", make_text=make_quote)
         if action == "weak":
             def make_weak():
                 weak = [row[0] for row in stats.weak_keys(self.store.key_stats)]
                 source = textgen.WeakSource(lang, weak, rng=self.rng)
                 if weak:
-                    note = "Fokus auf: " + "  ".join(weak)
+                    note = tr("Fokus auf: ", "Focus on: ") + "  ".join(weak)
                 else:
-                    note = "Noch zu wenig Daten – übe erst ein paar andere Tests."
+                    note = tr("Noch zu wenig Daten – übe erst ein paar andere Tests.",
+                              "Not enough data yet – do a few other tests first.")
                 return source.text(value), note
-            return Mode("schwaechen-%d-%s" % (value, lang), "Schwächen-Training %d · %s" % (value, up),
+            return Mode("schwaechen-%d-%s" % (value, lang),
+                        tr("Schwächen-Training %d · %s", "Weak keys %d · %s") % (value, up),
                         "text", make_text=make_weak, count_words=True)
         raise ValueError(action)
 
@@ -353,22 +379,24 @@ class App:
             self.run_mode(self._story_mode(level, action))
 
     def _story_mode(self, level, first):
-        items = stories.STORIES[level]
-        label = stories.LEVEL_LABELS[level]
+        lang = self._lang()
+        items = stories.stories_for(lang, level)
+        label = stories.level_label(level)
+        story = tr("Geschichte", "Story")
         state = {"i": first, "shown": first}
 
         def make_text():
             state["shown"] = state["i"]
             title, text = items[state["i"]]
-            return text, "„%s“ · Geschichte %d/%d (%s)" % (title, state["i"] + 1, len(items), label)
+            return text, "\"%s\" · %s %d/%d (%s)" % (title, story, state["i"] + 1, len(items), label)
 
         def on_complete(result):
             state["i"] = (state["shown"] + 1) % len(items)
 
-        mode = Mode("geschichte-%s" % level, "Geschichte (%s)" % label, "text",
-                    make_text=make_text, on_complete=on_complete)
-        mode.extra = lambda: {"story": stories.story_id(level, state["shown"]), "lang": "de",
-                              "label": "Geschichte (%s) · %s" % (label, items[state["shown"]][0])}
+        key = "geschichte-%s" % level + ("-en" if lang == "en" else "")
+        mode = Mode(key, "%s (%s)" % (story, label), "text", make_text=make_text, on_complete=on_complete)
+        mode.extra = lambda: {"story": stories.story_id(level, state["shown"]), "lang": lang,
+                              "label": "%s (%s) · %s" % (story, label, items[state["shown"]][0])}
         return mode
 
     # --- Eigene Texte ----------------------------------------------------
@@ -386,7 +414,8 @@ class App:
                 entry = self.store.custom_texts[action]
                 if key in (T.DELETE, "d", "D"):
                     title = entry.get("title") or entry["text"][:30]
-                    if ui.confirm(self.term, "Text löschen", "„%s“ wirklich löschen?" % title):
+                    if ui.confirm(self.term, tr("Text löschen", "Delete text"),
+                                  tr("„%s“ wirklich löschen?", "Really delete \"%s\"?") % title):
                         del self.store.custom_texts[action]
                         self.store.save()
                         index = max(0, index - 1)
@@ -402,7 +431,7 @@ class App:
             state["end"] = end
             note = ""
             if end - start < len(entry["text"]):
-                note = "Abschnitt: %d %% – %d %% des Textes" % (
+                note = tr("Abschnitt: %d %% – %d %% des Textes", "Part: %d %% – %d %% of the text") % (
                     100 * start // len(entry["text"]), 100 * end // len(entry["text"]))
             return entry["text"][start:end].strip(), note
 
@@ -411,13 +440,14 @@ class App:
             entry["pos"] = 0 if end >= len(entry["text"]) else end
             self.store.save()
 
-        return Mode("eigener", "Eigener Text · %s" % title[:40], "text",
+        return Mode("eigener", tr("Eigener Text · %s", "Own text · %s") % title[:40], "text",
                     make_text=make_text, on_complete=on_complete)
 
     def _save_custom(self, title, text):
         text = textgen.normalize_text(text)
         if not text:
-            ui.message(self.term, "Eigener Text", ["Der Text ist leer – nichts gespeichert."])
+            ui.message(self.term, tr("Eigener Text", "Your own text"),
+                       [tr("Der Text ist leer – nichts gespeichert.", "The text is empty – nothing saved.")])
             return
         title = textgen.normalize_text(title) or text[:30]
         self.store.custom_texts.append({
@@ -429,9 +459,11 @@ class App:
     def _add_pasted_text(self):
         lines, title = [], ""
         with self.term.cooked():
-            print("EIGENEN TEXT EINFÜGEN\n")
-            print("Füge deinen Text ein (z. B. mit Strg+Umschalt+V oder Rechtsklick).")
-            print("Zum Abschließen zweimal Enter drücken – oder eine Zeile mit nur einem Punkt.\n")
+            print(tr("EIGENEN TEXT EINFÜGEN\n", "PASTE YOUR OWN TEXT\n"))
+            print(tr("Füge deinen Text ein (z. B. mit Cmd+V, Strg+Umschalt+V oder Rechtsklick).",
+                     "Paste your text (e.g. with Cmd+V, Ctrl+Shift+V or right-click)."))
+            print(tr("Zum Abschließen zweimal Enter drücken – oder eine Zeile mit nur einem Punkt.\n",
+                     "Press Enter twice to finish – or type a line with just a period.\n"))
             empty = 0
             try:
                 while True:
@@ -446,7 +478,8 @@ class App:
                     empty = 0
                     lines.append(line)
                 if lines:
-                    title = input("\nTitel (optional, Enter = automatisch): ")
+                    title = input(tr("\nTitel (optional, Enter = automatisch): ",
+                                     "\nTitle (optional, Enter = automatic): "))
             except (EOFError, KeyboardInterrupt):
                 lines = []
         if lines:
@@ -454,9 +487,10 @@ class App:
 
     def _add_file_text(self):
         with self.term.cooked():
-            print("TEXT AUS DATEI LADEN\n")
+            print(tr("TEXT AUS DATEI LADEN\n", "LOAD TEXT FROM FILE\n"))
             try:
-                raw = input("Pfad zur Datei (leer = abbrechen): ").strip().strip("\"'")
+                raw = input(tr("Pfad zur Datei (leer = abbrechen): ",
+                               "Path to the file (empty = cancel): ")).strip().strip("\"'")
             except (EOFError, KeyboardInterrupt):
                 raw = ""
         if not raw:
@@ -465,19 +499,22 @@ class App:
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError as exc:
-            ui.message(self.term, "Datei laden", ["Die Datei konnte nicht gelesen werden:", str(exc)])
+            ui.message(self.term, tr("Datei laden", "Load file"),
+                       [tr("Die Datei konnte nicht gelesen werden:", "The file could not be read:"), str(exc)])
             return
         self._save_custom(path.stem, text)
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="keyflow",
-                                     description="KeyFlow – Tipptrainer für das Terminal.")
-    parser.add_argument("--daten", metavar="DATEI",
-                        help="eigene Datendatei verwenden (Standard: ~/.keyflow/daten.json)")
+                                     description="KeyFlow – a typing trainer for the terminal. "
+                                                 "Made by yns.laf")
+    parser.add_argument("--data", "--daten", dest="data", metavar="FILE",
+                        help="use a different data file (default: ~/.keyflow/daten.json)")
+    parser.add_argument("--version", action="version", version="KeyFlow %s" % __version__)
     args = parser.parse_args(argv)
 
-    store = Store(args.daten)
+    store = Store(args.data)
     try:
         with T.Terminal() as term:
             try:
@@ -489,5 +526,6 @@ def main(argv=None):
         return 1
     days = stats.daily_seconds(store.history)
     today_minutes = days.get(date.today(), 0) / 60
-    print("Bis bald! Heute geübt: %s min." % ui.fmt_num(today_minutes))
+    print(tr("Bis bald! Heute geübt: %s min.", "See you soon! Practiced today: %s min.")
+          % ui.fmt_minutes(today_minutes * 60))
     return 0

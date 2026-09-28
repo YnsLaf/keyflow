@@ -2,282 +2,168 @@
 
 *made by yns.laf*
 
-KeyFlow ist ein Tipptrainer fürs Terminal, geschrieben in Python mit
-[colorama](https://pypi.org/project/colorama/). Er läuft unter Windows, Linux
-und macOS.
+KeyFlow is a typing trainer for the terminal, written in Python. It runs on
+macOS, Linux and Windows and speaks **English and German**. On first start you
+choose the language of the whole tool.
 
 ```
-K E Y F L O W  made by yns.laf                              Serie 4 Tage
-Heute 6,5/15 min ████░░░░░░░░          14 Tage ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■
+K E Y F L O W  made by yns.laf                             Streak 4 days
+Today 6.5/15 min ████░░░░░░░░          14 days ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■
 ────────────────────────────────────────────────────────────────────────
-❯ 1  Weiter: Wörter-Test · 25 Wörter    ╭──────────────────────────╮
-  2  Tippen üben                        │ Noch 9 min bis zum       │
-  3  Texte & Geschichten                │ Tagesziel.               │
-  4  Zahlen & Zeichen                   ╰──┬───────────────────────╯
-  5  Fortschritt                           ╵
-  6  Einstellungen                        ╭───────╮
-  7  Beenden                              │ ◕   ◕ │
+❯ 1  Continue: Word test · 25 words     ╭──────────────────────────╮
+  2  Practice                           │ 9 more min to your daily │
+  3  Texts & stories                    │ goal.                    │
+  4  Numbers & symbols                  ╰──┬───────────────────────╯
+  5  Progress                              ╵
+  6  Settings                             ╭───────╮
+  7  Quit                                 │ ◕   ◕ │
                                           │   ‿   │
                                           ╰─┬───┬─╯
                                             ╵   ╵
-                                             Flo
+                                            Flow
 ```
 
-## Menü
+## Installation
 
-- **Weiter** startet sofort den Modus, den du zuletzt gespielt hast.
-- **Tippen üben:** Zeit-Test, Wörter-Test, Freier Modus, Unendlich-Modus
-- **Texte & Geschichten:** Geschichten, Sätze, Zitate, eigene Texte
-- **Zahlen & Zeichen:** Zahlen, Sonderzeichen, Gemischt, Schwächen-Training
-- **Fortschritt:** Statistik & Rekorde, Aktivitätskalender, Erfolge
-- **Einstellungen**
+You need Python 3.8 or newer. Everything else (the `colorama` library) is
+installed automatically.
 
-Jeden Eintrag erreichst du mit den Pfeiltasten oder direkt mit seiner Ziffer. In
-den Unterseiten stellst du Länge oder Stufe mit ← → ein.
+### macOS and Linux – one command
 
-**Flo**, das Maskottchen, blinzelt, wippt und gibt Tipps. Es zeigt dir auch, wie
-weit du vom Tagesziel entfernt bist, und erinnert an deine Serie und deinen
-Rekord.
+```bash
+curl -fsSL https://raw.githubusercontent.com/YnsLaf/keyflow/main/install.sh | sh
+```
 
-## Installieren
+The installer checks Python, installs [pipx](https://pipx.pypa.io) if needed
+and then installs KeyFlow. Afterwards start it with:
 
-Du brauchst Python 3.8 oder neuer.
+```bash
+keyflow
+```
+
+### With pip
 
 ```bash
 pip install keyflow-typing
 keyflow
 ```
 
-Auf dem Mac geht es am saubersten mit [pipx](https://pipx.pypa.io). Das installiert
-KeyFlow in eine eigene Umgebung, und der Befehl `keyflow` funktioniert überall:
+On macOS, pipx is the cleanest way:
 
 ```bash
 brew install pipx
 pipx ensurepath
 pipx install keyflow-typing
-keyflow
 ```
-
-Aktualisieren kannst du mit `pip install -U keyflow-typing` bzw. `pipx upgrade keyflow-typing`.
-
-## Aus dem Quellcode starten
-
-### macOS und Linux
-
-```bash
-git clone https://github.com/YnsLaf/keyflow
-cd tipptrainer
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python start.py
-```
-
-Beim nächsten Mal reicht:
-
-```bash
-cd tipptrainer
-source .venv/bin/activate
-python start.py
-```
-
-Auf dem Mac heißen die Befehle ohne Umgebung `python3` und `pip3`. Wenn beim
-ersten `python3` ein Fenster die „Befehlszeilenentwickler-Tools“ installieren
-will, bestätige das und starte die Befehle danach noch einmal.
-
-### Mit einem Befehl starten (macOS/Linux)
-
-Damit sich der Trainer öffnet, sobald du `trainer` eingibst, egal in welchem
-Ordner:
-
-```bash
-echo 'alias trainer="$HOME/tipptrainer/.venv/bin/python $HOME/tipptrainer/start.py"' >> ~/.zshrc && source ~/.zshrc
-```
-
-Das setzt voraus, dass der Ordner unter `~/tipptrainer` liegt und `.venv`
-angelegt ist. Mit bash statt zsh nimm `~/.bashrc` statt `~/.zshrc`.
 
 ### Windows
 
 ```bat
-git clone https://github.com/YnsLaf/keyflow
-cd tipptrainer
-py -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python start.py
+py -m pip install keyflow-typing
+keyflow
 ```
 
-Am besten funktioniert das *Windows Terminal*.
+Windows Terminal works best.
 
-### Als Befehl installieren
-
-Bei aktiver Umgebung installiert `pip install .` den Befehl `keyflow`.
-Er funktioniert, solange die Umgebung aktiv ist.
-
-Das Terminalfenster sollte mindestens 80 × 24 Zeichen groß sein. Beim Starten und
-Beenden wird das Terminal komplett geleert.
-
-## Modi
-
-| Modus | Was passiert |
-|---|---|
-| **Zeit-Test** | Du tippst so viele Wörter wie möglich in 15, 30, 60 oder 120 Sekunden. |
-| **Wörter-Test** | Du tippst 10, 25, 50 oder 100 Wörter so schnell wie möglich. |
-| **Freier Modus** | Kein Limit, der Text geht immer weiter. Esc beendet den Test und speichert ihn. Als Text gibt es Wörter, Sätze, Zahlen, Sonderzeichen oder alles gemischt. |
-| **Unendlich-Modus** | Überlebensmodus: Du startest mit 10 Sekunden. Jedes richtig getippte Wort bringt Zeit, jeder Fehler kostet 1 Sekunde. Alle 20 Wörter steigt das Level: Die Wörter werden länger, dann kommen Satzzeichen, Zahlen und Sonderzeichen dazu, und pro Wort gibt es weniger Zeit. Du kannst ab Level 1, 3 oder 5 starten. Rekord ist die Zahl der geschafften Wörter. |
-| **Geschichten** | 40 Geschichten auf Deutsch: 10 einfache, 10 mittlere, 10 schwere und 10 extreme. Einfach heißt kurze Sätze und bekannte Wörter. Extrem heißt lange Texte voller Zahlen, Einheiten, Klammern, Paragrafen und Fachwörter. Die Liste zeigt, welche du schon geschafft hast und mit welchem Tempo. Nach einer Geschichte geht es mit Enter direkt zur nächsten. |
-| **Sätze** | Automatisch erzeugte, grammatisch richtige Sätze auf Deutsch oder Englisch. |
-| **Zahlen** | Preise, Uhrzeiten, Datumsangaben, Rechnungen, Einheiten und Telefonnummern. |
-| **Sonderzeichen** | Klammern, Operatoren, Pfade, E-Mail-Adressen und Code-Schnipsel. |
-| **Gemischt (Profi)** | Wörter, Großbuchstaben, Satzzeichen, Zahlen und Sonderzeichen durcheinander. |
-| **Zitate & Sprichwörter** | Sprichwörter und berühmte Textstellen, z. B. von Goethe, Schiller, Kafka oder den Brüdern Grimm. |
-| **Schwächen-Training** | Erzeugt Text mit genau den Tasten, bei denen du die meisten Fehler machst. |
-| **Eigener Text** | Du fügst einen Text ein oder lädst eine `.txt`-Datei. Lange Texte werden in Abschnitten geübt, und der Trainer merkt sich, wo du stehst. |
-
-Im Hauptmenü wählst du Länge oder Variante direkt mit **← →** aus.
-
-## Aussehen
-
-- **Hintergrund:** Beim Start färbt KeyFlow den Terminal-Hintergrund ein.
-  - Standard ist „Glas (yns.laf)“: Farbton 0°, Sättigung 0 %, Helligkeit 10 %,
-    Deckkraft 30 %.
-  - Außerdem gibt es Mitternacht, Graphit, Ozean, Wald, Aubergine, Schwarz und
-    „wie im Terminal“.
-  - Beim Beenden kommt dein eigener Hintergrund zurück.
-  - Im Mac-Terminal passiert das über AppleScript. Beim ersten Start fragt macOS
-    eventuell, ob das Terminal gesteuert werden darf.
-  - Das Mac-Terminal kann die Deckkraft nur über ein Profil setzen. Für „Glas“
-    legt KeyFlow deshalb einmalig das Terminal-Profil **KeyFlow** an: Farbe,
-    30 % Deckkraft, leichte Unschärfe und deine Schrift. Dabei geht kurz ein
-    Fenster auf und wieder zu. Beim Start schaltet KeyFlow deinen Tab auf dieses
-    Profil, beim Beenden zurück. Gefällt es dir, kannst du es unter
-    *Terminal → Einstellungen → Profile* mit *Als Standard* für alle Fenster
-    nutzen.
-  - Andere Hintergründe setzen nur die Farbe und sind im Mac-Terminal nicht
-    transparent.
-- **Titelleiste:** Während KeyFlow läuft, steht oben im Fenster nur „KeyFlow“.
-  Im Mac-Terminal blendet das KeyFlow-Profil dafür Ordner, Prozess und
-  Fenstergröße aus.
-- **Bewegte Farben:**
-  - Der Titel und die Fortschrittslinie über dem Text laufen als Farbverlauf.
-  - Die Auswahl im Menü schimmert.
-  - Die nächste Taste pulsiert.
-  - In den Einstellungen lässt sich das abschalten.
-- **Tastatur beim Tippen:** Unter dem Text ist eine schlichte Tastatur zu sehen.
-  - Die nächste Taste leuchtet, bei Großbuchstaben und Sonderzeichen auch die
-    passende Umschalt-, AltGr- bzw. ⌥-Taste.
-  - F und J (Grundstellung) sind markiert.
-  - Darunter steht, mit welchem Finger du die Taste drückst.
-  - Eine falsch gedrückte Taste blinkt kurz rot.
-  - Das Wort, an dem du gerade tippst, ist hervorgehoben.
-  - Mac-Tastaturen (⌥) werden automatisch erkannt.
-
-## Tasten beim Tippen
-
-| Taste | Wirkung |
-|---|---|
-| Rücktaste | letztes Zeichen löschen |
-| Strg + Rücktaste (macOS: Option + Rücktaste) | ganzes Wort löschen |
-| Tab | Test mit neuem Text neu starten |
-| Esc | zurück ins Menü (im freien und im Unendlich-Modus: beenden und speichern) |
-
-## Statistik, Rekorde und Aktivität
-
-- **Ergebnis nach jedem Test**
-  - WPM in großen Ziffern und Genauigkeit
-  - Roh-WPM, Konstanz, Anzahl der Fehler und ein WPM-Verlauf über die Zeit
-  - welche Tasten dir Probleme gemacht haben
-  - eine Meldung bei neuem Rekord
-- **Rekorde** werden je Modus, Länge und Sprache geführt. Mit Satzzeichen oder
-  Zahlen gibt es eigene Rekorde.
-- **Verlauf**
-  - Balkendiagramm deiner letzten Tests
-  - Trend im Vergleich zu den zehn Tests davor
-- **Tastatur-Ansicht**
-  - Die QWERTZ- bzw. QWERTY-Tastatur ist nach deiner Fehlerquote eingefärbt,
-    von grün bis rot.
-  - Darunter stehen deine schwächsten Tasten.
-- **Aktivitätskalender** wie auf GitHub:
-  - Er zeigt das letzte Jahr, und jeder Tag ist ein Kästchen. Je länger du
-    geübt hast, desto kräftiger ist das Grün.
-  - Die Farbe richtet sich nach deinem Tagesziel.
-  - Dazu kommen aktuelle und längste Serie, aktive Tage und die Übungszeit.
-  - Mit ← → blätterst du in ältere Zeiträume.
-- **Tagesziel und Serie** stehen immer oben im Hauptmenü.
-- **29 Erfolge** gibt es, z. B. für 50/70/90/110 WPM, fehlerfreie Tests,
-  7 Tage am Stück, 150 Wörter im Unendlich-Modus oder alle 40 Geschichten.
-
-```
-     Nov     Dez       Jan     Feb     Mär       Apr     Mai     Jun       Jul
- Mo  ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■
-     ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■
- Mi  ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■
-     ...
-     Weniger ■ ■ ■ ■ ■ Mehr
-
- 183 aktive Tage  ·  16 h 19 min Übung  ·  835 Tests
- Aktuelle Serie 4  ·  Längste Serie 11  ·  Tagesziel 15 min
-```
-
-## Einstellungen
-
-- Sprache der Texte: Deutsch oder Englisch
-- Wortlänge: kurz, gemischt oder lang
-- Satzzeichen und Zahlen in Zeit-, Wörter- und freien Tests
-- nur Kleinbuchstaben
-- Umlaute & ß tippen oder durch ae/oe/ue/ss ersetzen (praktisch ohne
-  deutsche Tastatur)
-- Fehlermodus: weitertippen erlaubt oder Fehler müssen korrigiert werden
-- Live-WPM, Cursorform, sichtbare Zeilen, Textbreite und Ton bei Fehlern
-- Hintergrund, Farbmodus (256 Farben, True Color, 16 Farben) und bewegte Farben
-- Tastatur beim Tippen an oder aus
-- Tagesziel von 5 bis 60 Minuten
-- Statistiken zurücksetzen
-
-## Wo werden die Daten gespeichert?
-
-Alles liegt in einer einzigen Datei: `~/.keyflow/daten.json`. Unter Windows
-ist das `C:\Users\<Name>\.keyflow\daten.json`. Mit `--daten PFAD` oder der
-Umgebungsvariable `KEYFLOW_HOME` kannst du einen anderen Ort wählen. Daten aus
-älteren Versionen (`~/.tipptrainer`) werden beim ersten Start automatisch übernommen.
-
-## Wie wird gerechnet?
-
-- **WPM** (Wörter pro Minute) = richtig getippte Zeichen ÷ 5 ÷ Minuten.
-  5 Zeichen gelten als ein Wort, so wie bei den meisten Tipptrainern.
-- **Roh-WPM** zählt alle Anschläge, auch die falschen.
-- **Genauigkeit** = richtige Anschläge ÷ alle Anschläge. Ein Fehler zählt also
-  auch dann, wenn du ihn danach korrigierst.
-- **Konstanz** zeigt, wie gleichmäßig du tippst: 100 % heißt, dein Tempo war
-  jede Sekunde gleich.
-
-## Tests
+### Updating
 
 ```bash
+pipx upgrade keyflow-typing        # or: pip install -U keyflow-typing
+```
+
+> The package on PyPI is called **keyflow-typing** (the name "keyflow" was
+> already taken). The command is simply `keyflow`.
+
+## First start
+
+Before KeyFlow starts for the first time, it asks:
+
+```
+Choose your language  ·  Wähle deine Sprache
+❯ 1  English
+  2  Deutsch
+```
+
+Menus, hints, statistics, achievements, Flow the mascot and the practice texts
+then use that language. You can change it any time in the settings.
+
+## Modes
+
+| Mode | What happens |
+|---|---|
+| **Time test** | Type as many words as possible in 15, 30, 60 or 120 seconds. |
+| **Word test** | Type 10, 25, 50 or 100 words as fast as you can. |
+| **Free mode** | No limit – the text never ends. Esc finishes and saves. Words, sentences, numbers, symbols or mixed. |
+| **Endless mode** | Survival: you start with 10 seconds, every correct word adds time, every mistake costs 1 second. Every 20 words the level rises and it gets harder. |
+| **Stories** | 40 stories in English and German: 10 easy, 10 medium, 10 hard, 10 extreme. |
+| **Sentences** | Generated, grammatically correct sentences. |
+| **Numbers** | Prices, times, dates, sums, units and phone numbers. |
+| **Symbols** | Brackets, operators, paths, e-mails and code snippets. |
+| **Mixed (pro)** | Words, capitals, punctuation, numbers and symbols all mixed up. |
+| **Quotes & proverbs** | Proverbs and famous lines from Shakespeare, Austen, Dickens, Goethe, Kafka … |
+| **Weak keys** | Generates text with exactly the keys you get wrong the most. |
+| **Your own text** | Paste a text or load a `.txt` file. Long texts are practiced in parts. |
+
+## While typing
+
+- A keyboard under the text shows which key comes next. With capitals and
+  symbols the right ⇧ / ⌥ / AltGr key lights up too, and a hint tells you which
+  finger to use. Mistakes flash red.
+- The word you are typing is highlighted, and a flowing progress line runs
+  above the text.
+
+| Key | Action |
+|---|---|
+| Backspace | delete last character |
+| Ctrl + Backspace (macOS: Option + Backspace) | delete whole word |
+| Tab | restart with a new text |
+| Esc | back to the menu (free and endless mode: finish and save) |
+
+## Progress
+
+- **Result after every test:** WPM and accuracy in big digits, raw WPM,
+  consistency, a speed graph, the keys you missed and new records.
+- **Records** per mode, length and language.
+- **History:** chart of your recent tests and your trend.
+- **Keyboard view:** every key colored by your error rate.
+- **Activity calendar** like on GitHub, plus current and longest streak.
+- **Daily goal and streak** at the top of the menu.
+- **29 achievements**.
+
+## Look
+
+- **Background:** KeyFlow colors the terminal when it starts and restores it
+  when you quit.
+  - The default is "Glass": hue 0°, saturation 0 %, brightness 10 %, opacity 30 %.
+  - In the macOS Terminal this uses a Terminal profile called "KeyFlow", which
+    KeyFlow creates once (a window briefly opens and closes).
+  - The window title then only shows "KeyFlow".
+- **Moving colors:** flowing gradients, a shimmering menu and a pulsing next key.
+- **Flow**, the mascot, blinks, bobs and gives you tips.
+
+## Settings
+
+Language, text language, keyboard layout (QWERTZ/QWERTY), word length,
+punctuation, numbers, lowercase only, umlauts, strict mode, live WPM, cursor,
+visible lines, text width, sound, background, color mode, moving colors,
+keyboard while typing, daily goal, reset statistics.
+
+## Data
+
+Everything is stored in `~/.keyflow/daten.json`. Use `keyflow --data FILE` or the
+environment variable `KEYFLOW_HOME` to choose another place.
+
+## Development
+
+```bash
+git clone https://github.com/YnsLaf/keyflow
+cd tipptrainer
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .
+keyflow
 python -m unittest discover -s tests
 ```
 
-## Aufbau
-
-```
-keyflow/
-  app.py       Programmablauf, Modi, Speichern der Ergebnisse
-  engine.py    Tipp-Logik und Berechnungen (ohne Ein-/Ausgabe)
-  textgen.py   Textgenerator: Wörter, Sätze, Zahlen, Sonderzeichen, Zitate
-  words.py     Wortlisten, Satzbausteine, Zitate
-  stories.py   die 40 Geschichten
-  stats.py     Rekorde, Serien, schwache Tasten, Erfolge
-  storage.py   Einstellungen und Verlauf als JSON
-  screens.py   alle Bildschirme
-  ui.py        Farben, Farbverläufe, Menüs, Diagramme
-  keyboard.py  Bildschirm-Tastatur und Fingerzuordnung
-  macprofile.py  transparenter Hintergrund im Mac-Terminal
-  terminal.py  Tastatur-Eingabe für Windows, Linux und macOS
-```
-
-## Neue Version veröffentlichen
-
-KeyFlow wird automatisch auf PyPI veröffentlicht, sobald auf GitHub ein Release
-erstellt wird (`.github/workflows/publish.yml`). Vorher die Versionsnummer in
-`pyproject.toml` und `keyflow/__init__.py` erhöhen.
+A new release on GitHub publishes the package to PyPI automatically
+(`.github/workflows/publish.yml`). Raise the version in `pyproject.toml` and
+`keyflow/__init__.py` first.
