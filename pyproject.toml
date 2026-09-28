@@ -10,9 +10,16 @@ readme = "README.md"
 requires-python = ">=3.8"
 dependencies = ["colorama>=0.4.6"]
 authors = [{ name = "YnsLaf" }]
-keywords = ["typing", "typing-trainer", "touch-typing", "wpm", "terminal", "tui", "keyboard", "tipptrainer"]
+keywords = ["keyflow", "typing", "typing-trainer", "typing-test", "typing-game", "touch-typing", "wpm", "terminal", "tui", "cli", "keyboard", "tipptrainer", "zehnfingersystem"]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
     "Natural Language :: English",
@@ -24,6 +31,9 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/YnsLaf/keyflow"
+Source = "https://github.com/YnsLaf/keyflow"
+Issues = "https://github.com/YnsLaf/keyflow/issues"
+Author = "https://github.com/YnsLaf"
 
 [project.scripts]
 keyflow = "keyflow.app:main"
