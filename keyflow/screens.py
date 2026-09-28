@@ -951,6 +951,9 @@ def settings_ui():
         ("background", tr("Hintergrund", "Background"), lambda v: pick(ui.BACKGROUNDS[v][0]),
          tr("Färbt das Terminal beim Start ein – beim Beenden kommt dein Hintergrund zurück.",
             "Colors the terminal on start – your own background returns when you quit.")),
+        ("glass_opacity", tr("Glas-Deckkraft", "Glass opacity"), lambda v: "%d %%" % v,
+         tr("Wie undurchsichtig der Glas-Hintergrund ist. Mehr = besser lesbar vor hellen Fenstern.",
+            "How opaque the glass background is. Higher = easier to read over bright windows.")),
         ("color_mode", tr("Farbmodus", "Color mode"),
          {"256": tr("256 Farben", "256 colors"), "truecolor": "True Color",
           "basic": tr("Basis (16 Farben)", "Basic (16 colors)")},
@@ -971,7 +974,7 @@ def settings_ui():
     )
 
 
-LOOK_SETTINGS = ("background", "color_mode", "animations")
+LOOK_SETTINGS = ("background", "glass_opacity", "color_mode", "animations")
 
 
 def settings_screen(term, store, on_look_change=None, on_language_change=None):

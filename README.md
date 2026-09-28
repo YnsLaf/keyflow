@@ -137,9 +137,10 @@ then use that language. You can change it any time in the settings.
 
 - **Background:** KeyFlow colors the terminal when it starts and restores it
   when you quit.
-  - The default is "Glass": hue 0°, saturation 0 %, brightness 10 %, opacity 30 %.
-  - In the macOS Terminal this uses a Terminal profile called "KeyFlow", which
-    KeyFlow creates once (a window briefly opens and closes).
+  - The default is "Glass": hue 0°, saturation 0 %, brightness 10 %, opacity 70 %
+    and a strong blur. The opacity (30–95 %) can be changed in the settings.
+  - In the macOS Terminal this uses a Terminal profile such as "KeyFlow 70",
+    which KeyFlow creates once per opacity level (a window briefly opens and closes).
   - The window title then only shows "KeyFlow".
 - **Moving colors:** flowing gradients, a shimmering menu and a pulsing next key.
 - **Flow**, the mascot, blinks, bobs and gives you tips.
@@ -165,7 +166,7 @@ Ideas, bugs or wishes? Open an issue on
 
 Language, text language, keyboard layout (QWERTZ/QWERTY), word length,
 punctuation, numbers, lowercase only, umlauts, strict mode, live WPM, cursor,
-visible lines, text width, sound, background, color mode, moving colors,
+visible lines, text width, sound, background, glass opacity, color mode, moving colors,
 keyboard while typing, update check, daily goal, reset statistics.
 
 ## Data

@@ -12,8 +12,13 @@ import sys
 import tempfile
 import time
 
-PROFILE = "KeyFlow"
+PROFILE = "KeyFlow"          # Profilname-Anfang; die Deckkraft wird angehängt ("KeyFlow 70")
+LEGACY_PROFILE = "KeyFlow"   # altes Profil mit 30 % aus Version 1.4.0
 TITLE = "KeyFlow"
+
+
+def profile_name(opacity):
+    return "%s %d" % (PROFILE, round(opacity * 100))
 
 
 def available():
@@ -70,11 +75,11 @@ def ns_color(r, g, b, a=1.0):
 def profile_data(rgb, opacity, columns, rows):
     r, g, b = (c / 255 for c in rgb)
     return {
-        "name": PROFILE,
+        "name": profile_name(opacity),
         "type": "Window Settings",
         "ProfileCurrentVersion": 2.07,
         "BackgroundColor": ns_color(r, g, b, opacity),
-        "BackgroundBlur": 0.5,
+        "BackgroundBlur": 0.85,   # stark verwischen, damit Text auch vor Hellem lesbar bleibt
         "TextColor": ns_color(0.92, 0.92, 0.92),
         "TextBoldColor": ns_color(1, 1, 1),
         "CursorColor": ns_color(0.85, 0.85, 0.85),
@@ -99,15 +104,15 @@ def profile_data(rgb, opacity, columns, rows):
     }
 
 
-def _profile_exists():
-    return run_script('tell application "Terminal" to return exists settings set "%s"' % PROFILE) == "true"
+def _profile_exists(name):
+    return run_script('tell application "Terminal" to return exists settings set "%s"' % name) == "true"
 
 
-def _import_profile(rgb, opacity, columns, rows):
+def _import_profile(name, rgb, opacity, columns, rows):
     """Öffnet eine .terminal-Datei: Terminal übernimmt sie als Profil und öffnet
     dafür ein Fenster, das gleich wieder geschlossen wird."""
     folder = tempfile.mkdtemp(prefix="keyflow-")
-    path = os.path.join(folder, PROFILE + ".terminal")
+    path = os.path.join(folder, name + ".terminal")
     with open(path, "wb") as fh:
         plistlib.dump(profile_data(rgb, opacity, columns, rows), fh)
     try:
@@ -115,7 +120,7 @@ def _import_profile(rgb, opacity, columns, rows):
     except (OSError, subprocess.SubprocessError):
         return False
     for _ in range(40):
-        if _profile_exists():
+        if _profile_exists(name):
             break
         time.sleep(0.1)
     else:
@@ -132,11 +137,11 @@ def _import_profile(rgb, opacity, columns, rows):
         '  repeat with i in ids\n'
         '    close (window id i)\n'
         '  end repeat\n'
-        'end tell' % PROFILE)
+        'end tell' % name)
     return True
 
 
-def _set_title_options():
+def _set_title_options(name):
     """Auch bei einem schon vorhandenen Profil: Titel nur "KeyFlow"."""
     options = [
         'set custom title of s to "%s"' % TITLE,
@@ -147,39 +152,55 @@ def _set_title_options():
         "set title displays settings name of s to false",
     ]
     run_script('tell application "Terminal"\n'
-               '  set s to settings set "%s"\n' % PROFILE
+               '  set s to settings set "%s"\n' % name
                + "".join("  try\n    %s\n  end try\n" % o for o in options)
                + "end tell")
 
 
+def _remove_legacy_profile():
+    """Entfernt das alte Profil "KeyFlow" (30 %), falls es noch existiert."""
+    if _profile_exists(LEGACY_PROFILE):
+        run_script('tell application "Terminal"\n'
+                   '  try\n    delete settings set "%s"\n  end try\n'
+                   'end tell' % LEGACY_PROFILE)
+
+
+def _is_keyflow_profile(name):
+    return name == LEGACY_PROFILE or name.startswith(PROFILE + " ")
+
+
 class GlassProfile:
-    """Schaltet den eigenen Tab auf das KeyFlow-Profil und wieder zurück."""
+    """Schaltet den eigenen Tab auf ein KeyFlow-Profil und wieder zurück."""
 
     def __init__(self):
         self.previous = None
 
     def apply(self, rgb, opacity, columns, rows):
+        name = profile_name(opacity)
         current = tab_script("return name of current settings of t")
         if current is None:
             return False
-        if current == PROFILE:
+        if current == name:
             return True
         font = tab_script('return (font name of current settings of t) & "|" & '
                           '(font size of current settings of t)')
-        if not _profile_exists() and not _import_profile(rgb, opacity, columns, rows):
+        if not _profile_exists(name) and not _import_profile(name, rgb, opacity, columns, rows):
             return False
         # Schrift aus dem bisherigen Profil übernehmen
         if font and "|" in font:
-            name, size = font.split("|", 1)
+            font_name, size = font.split("|", 1)
             run_script('tell application "Terminal"\n'
                        '  set font name of settings set "%s" to "%s"\n'
                        '  set font size of settings set "%s" to %s\n'
-                       'end tell' % (PROFILE, name, PROFILE, size.replace(",", ".")))
-        _set_title_options()
-        if tab_script('set current settings of t to settings set "%s"' % PROFILE) is None:
+                       'end tell' % (name, font_name, name, size.replace(",", ".")))
+        _set_title_options(name)
+        if tab_script('set current settings of t to settings set "%s"' % name) is None:
             return False
         tab_script('set custom title of t to "%s"' % TITLE)
-        self.previous = current
+        # Beim Wechsel zwischen zwei KeyFlow-Stufen das ursprüngliche Profil behalten
+        if self.previous is None and not _is_keyflow_profile(current):
+            self.previous = current
+        _remove_legacy_profile()
         return True
 
     def restore(self):

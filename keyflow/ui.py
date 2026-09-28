@@ -32,7 +32,7 @@ STYLE = {"color": "256", "animate": True}
 # Deckkraft None = die Deckkraft des Terminal-Profils bleibt, wie sie ist.
 # "glas": Farbton 0°, Sättigung 0 %, Helligkeit 10 %, Deckkraft 30 %.
 BACKGROUNDS = {
-    "glas": (("Glas (YnsLaf)", "Glass (YnsLaf)"), (26, 26, 26), 0.30),
+    "glas": (("Glas (YnsLaf)", "Glass (YnsLaf)"), (26, 26, 26), 0.70),   # Deckkraft: Einstellung
     "mitternacht": (("Mitternacht", "Midnight"), (13, 17, 23), None),
     "graphit": (("Graphit", "Graphite"), (24, 24, 27), None),
     "ozean": (("Ozean", "Ocean"), (8, 24, 38), None),
