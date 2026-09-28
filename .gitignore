@@ -1,0 +1,9 @@
+# Python build and cache files
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# local virtual environment
+.venv/
