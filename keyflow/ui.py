@@ -26,15 +26,18 @@ _ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 # Aktueller Farbmodus und ob sich Farben bewegen (wird aus den Einstellungen gesetzt).
 STYLE = {"color": "256", "animate": True}
 
-# Hintergründe, die Keyflow beim Start ins Terminal setzt.
+# Hintergründe, die Keyflow beim Start ins Terminal setzt: (Name, RGB, Deckkraft).
+# Deckkraft None = die Deckkraft des Terminal-Profils bleibt, wie sie ist.
+# "glas": Farbton 0°, Sättigung 0 %, Helligkeit 10 %, Deckkraft 30 %.
 BACKGROUNDS = {
-    "mitternacht": ("Mitternacht", (13, 17, 23)),
-    "graphit": ("Graphit", (24, 24, 27)),
-    "ozean": ("Ozean", (8, 24, 38)),
-    "wald": ("Wald", (12, 28, 20)),
-    "aubergine": ("Aubergine", (28, 14, 34)),
-    "schwarz": ("Schwarz", (0, 0, 0)),
-    "aus": ("wie im Terminal", None),
+    "glas": ("Glas (yns.laf)", (26, 26, 26), 0.30),
+    "mitternacht": ("Mitternacht", (13, 17, 23), None),
+    "graphit": ("Graphit", (24, 24, 27), None),
+    "ozean": ("Ozean", (8, 24, 38), None),
+    "wald": ("Wald", (12, 28, 20), None),
+    "aubergine": ("Aubergine", (28, 14, 34), None),
+    "schwarz": ("Schwarz", (0, 0, 0), None),
+    "aus": ("wie im Terminal", None, None),
 }
 
 

@@ -19,7 +19,7 @@ SETTING_OPTIONS = {
     "text_width": [50, 60, 70, 80, 100],
     "bell": [False, True],
     "color_mode": ["256", "truecolor", "basic"],
-    "background": ["mitternacht", "graphit", "ozean", "wald", "aubergine", "schwarz", "aus"],
+    "background": ["glas", "mitternacht", "graphit", "ozean", "wald", "aubergine", "schwarz", "aus"],
     "animations": [True, False],
     "keyboard": [True, False],
     "daily_goal": [5, 10, 15, 20, 30, 45, 60],
@@ -39,7 +39,7 @@ DEFAULT_SETTINGS = {
     "text_width": 70,
     "bell": False,
     "color_mode": "256",
-    "background": "mitternacht",
+    "background": "glas",
     "animations": True,
     "keyboard": True,
     "daily_goal": 15,
@@ -72,6 +72,10 @@ MENU_DEFAULTS = {
     "quotes": "random",
     "weak": 25,
 }
+
+
+# 2: Standard-Hintergrund ist jetzt "glas"
+DATA_VERSION = 2
 
 
 def default_path():
@@ -126,6 +130,8 @@ class Store:
         for key, options in SETTING_OPTIONS.items():
             if key in stored and _valid(stored[key], options):
                 self.settings[key] = stored[key]
+        if data.get("version", 1) < 2:
+            self.settings["background"] = DEFAULT_SETTINGS["background"]
         menu = stored.get("menu", {})
         for key, options in MENU_OPTIONS.items():
             if key in menu and _valid(menu[key], options):
@@ -139,7 +145,7 @@ class Store:
 
     def save(self):
         data = {
-            "version": 1,
+            "version": DATA_VERSION,
             "settings": self.settings,
             "history": self.history,
             "key_stats": self.key_stats,
