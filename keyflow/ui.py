@@ -333,7 +333,7 @@ def frame(term, lines, footer="", width=72):
     cols, rows = term.size()
     w = min(width, cols - 2)
     margin = " " * max(1, (cols - w) // 2)
-    top = [""] * max(0, (rows - 2 - len(lines)) // 3)
+    top = [""] * max(0, (rows - 2 - len(lines)) // 2)
     body = top + [margin + line for line in lines]
     if footer:
         body = body[:rows - 2]

@@ -252,6 +252,7 @@ def category_menu(term, store, category, index=0):
 
 KEY_IDLE_FG = (110, 116, 128)
 KEY_HOME_FG = (170, 176, 188)   # F und J (Grundstellung)
+KEY_SPACE_FG = (70, 74, 84)
 KEY_GLOW_A = (80, 220, 255)
 KEY_GLOW_B = (170, 120, 255)
 KEY_ERROR = (235, 70, 80)
@@ -262,29 +263,26 @@ def live_keyboard(lang, next_char, flash=None):
     glow_keys, hint = keyboard.keys_for(next_char, lang)
     error_key = keyboard.base_key(flash, lang) if flash else None
     glow = ui.mix(KEY_GLOW_A, KEY_GLOW_B, ui.pulse(4.0))
-    basic = ui.STYLE["color"] == "basic"
     lines = []
     for row in keyboard.layout(lang):
-        parts = []
-        for label, key_id, width in row:
+        out, col = [], 0
+        for x, label, key_id, width in row:
+            out.append(" " * max(0, x - col))
             cap = label.center(width)
-            if key_id == error_key:
-                parts.append(ui.bg(KEY_ERROR) + Fore.WHITE + BRIGHT + cap + RESET)
+            if error_key is not None and key_id == error_key:
+                out.append(ui.bg(KEY_ERROR) + Fore.WHITE + BRIGHT + cap + RESET)
             elif key_id in glow_keys:
-                parts.append(ui.bg(glow) + Fore.BLACK + BRIGHT + cap + RESET)
+                out.append(ui.bg(glow) + Fore.BLACK + BRIGHT + cap + RESET)
             elif key_id == " ":
-                parts.append(DIM + "─" * width + RESET)
-            elif not label:
-                parts.append(" " * width)
-            elif basic:
-                parts.append(DIM + cap + RESET)
+                out.append(ui.fg(KEY_SPACE_FG) + "─" * width + RESET)
             elif key_id in ("f", "j"):
                 pad_l = (width - len(label)) // 2
-                parts.append(ui.fg(KEY_HOME_FG) + " " * pad_l + UNDERLINE + label + "\x1b[24m"
-                             + " " * (width - pad_l - len(label)) + RESET)
+                out.append(ui.fg(KEY_HOME_FG) + " " * pad_l + UNDERLINE + label + "\x1b[24m"
+                           + " " * (width - pad_l - len(label)) + RESET)
             else:
-                parts.append(ui.fg(KEY_IDLE_FG) + cap + RESET)
-        lines.append(" ".join(parts))
+                out.append(ui.fg(KEY_IDLE_FG) + cap + RESET)
+            col = x + width
+        lines.append("".join(out))
     return lines, hint
 
 
@@ -391,11 +389,12 @@ def draw_test(term, test, now, mode, settings, note="", flash=None):
         kb_margin = " " * max(1, (cols - kb_w) // 2)
         room = rows - 2 - len(lines)
         if room >= len(kb) + 3:
-            lines += [""] * (2 if room >= len(kb) + 5 else 1)
+            lines += [""] * (3 if room >= len(kb) + 8 else 1)
             lines += [kb_margin + k for k in kb]
+            lines += [""] if room >= len(kb) + 6 else []
             lines.append(" " * max(1, (cols - len(hint)) // 2) + DIM + hint + RESET)
 
-    top = max(0, (rows - len(lines) - 2) // 3)
+    top = max(0, (rows - len(lines) - 2) // 2)
     screen = [""] * top + lines
     screen = screen[:rows - 2]
     while len(screen) < rows - 2:
