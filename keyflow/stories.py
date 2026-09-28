@@ -6,8 +6,23 @@ Schwer:   verschachtelte Sätze, Zahlen, Semikolons, Anführungszeichen.
 Extrem:   lange Texte voller Zahlen, Einheiten, Klammern, Sonderzeichen und Fachwörter.
 """
 
+from .i18n import pick
+
 LEVELS = ("easy", "medium", "hard", "extreme")
-LEVEL_LABELS = {"easy": "einfach", "medium": "mittel", "hard": "schwer", "extreme": "extrem"}
+_LEVEL_LABELS = {"easy": ("einfach", "easy"), "medium": ("mittel", "medium"),
+                 "hard": ("schwer", "hard"), "extreme": ("extrem", "extreme")}
+
+
+def level_label(level):
+    return pick(_LEVEL_LABELS[level])
+
+
+def stories_for(lang, level):
+    """Die Geschichten einer Stufe in der Textsprache (de oder en)."""
+    if lang == "en":
+        from .stories_en import STORIES_EN
+        return STORIES_EN[level]
+    return STORIES[level]
 
 STORIES = {
     "easy": (

@@ -2,6 +2,8 @@
 
 from datetime import date, timedelta
 
+from .i18n import pick
+
 MODE_ORDER = ("zeit", "woerter", "frei", "unendlich", "geschichte", "saetze", "zahlen",
               "zeichen", "gemischt", "zitat", "schwaechen", "eigener")
 
@@ -108,38 +110,76 @@ def average(values):
 # --- Erfolge ----------------------------------------------------------------
 
 ACHIEVEMENTS = (
-    ("start", "Erste Schritte", "Schließe deinen ersten Test ab."),
-    ("wpm30", "Warmgelaufen", "Erreiche 30 WPM (mit mind. 90 % Genauigkeit)."),
-    ("wpm50", "Flinke Finger", "Erreiche 50 WPM (mit mind. 90 % Genauigkeit)."),
-    ("wpm70", "Schnellschreiber", "Erreiche 70 WPM (mit mind. 90 % Genauigkeit)."),
-    ("wpm90", "Tastenblitz", "Erreiche 90 WPM (mit mind. 90 % Genauigkeit)."),
-    ("wpm110", "Überschall", "Erreiche 110 WPM (mit mind. 90 % Genauigkeit)."),
-    ("perfekt", "Fehlerfrei", "100 % Genauigkeit bei mindestens 100 Zeichen."),
-    ("praezise", "Präzisionsarbeit", "5 Tests hintereinander mit mind. 98 % Genauigkeit."),
-    ("serie3", "Dranbleiben", "Übe an 3 Tagen in Folge."),
-    ("serie7", "Eine Woche stark", "Übe an 7 Tagen in Folge."),
-    ("serie30", "Gewohnheit", "Übe an 30 Tagen in Folge."),
-    ("ziel", "Tagesziel erreicht", "Erreiche dein Tagesziel an einem Tag."),
-    ("zeit1h", "Eine Stunde", "Übe insgesamt eine Stunde."),
-    ("zeit10h", "Zehn Stunden", "Übe insgesamt zehn Stunden."),
-    ("tests50", "Fleißig", "Schließe 50 Tests ab."),
-    ("tests250", "Unermüdlich", "Schließe 250 Tests ab."),
-    ("marathon", "Marathon", "Tippe im freien Modus 10 Minuten am Stück."),
-    ("zahlen", "Zahlenprofi", "Zahlen-Modus mit mind. 35 WPM und 95 % Genauigkeit."),
-    ("zeichen", "Symbolmeister", "Sonderzeichen mit mind. 25 WPM und 95 % Genauigkeit."),
-    ("zitate", "Belesen", "Tippe 10 Zitate."),
-    ("eigener", "Eigene Worte", "Tippe einen eigenen Text."),
-    ("zweisprachig", "Zweisprachig", "Übe auf Deutsch und auf Englisch."),
-    ("unendlich50", "Durchhalter", "Schaffe 50 Wörter im Unendlich-Modus."),
-    ("unendlich150", "Unaufhaltsam", "Schaffe 150 Wörter im Unendlich-Modus."),
-    ("geschichten10", "Geschichtenerzähler", "Tippe 10 verschiedene Geschichten."),
-    ("geschichten40", "Bücherwurm", "Tippe alle 40 Geschichten."),
-    ("extrem", "Extremist", "Tippe eine extreme Geschichte mit mind. 95 % Genauigkeit."),
-    ("eule", "Nachteule", "Übe zwischen 0 und 4 Uhr nachts."),
-    ("frueh", "Früher Vogel", "Übe zwischen 4 und 7 Uhr morgens."),
+    ("start", ("Erste Schritte", "First Steps"),
+     ("Schließe deinen ersten Test ab.", "Finish your first test.")),
+    ("wpm30", ("Warmgelaufen", "Warmed Up"),
+     ("Erreiche 30 WPM (mit mind. 90 % Genauigkeit).", "Reach 30 WPM (with at least 90 % accuracy).")),
+    ("wpm50", ("Flinke Finger", "Quick Fingers"),
+     ("Erreiche 50 WPM (mit mind. 90 % Genauigkeit).", "Reach 50 WPM (with at least 90 % accuracy).")),
+    ("wpm70", ("Schnellschreiber", "Speed Typist"),
+     ("Erreiche 70 WPM (mit mind. 90 % Genauigkeit).", "Reach 70 WPM (with at least 90 % accuracy).")),
+    ("wpm90", ("Tastenblitz", "Lightning Keys"),
+     ("Erreiche 90 WPM (mit mind. 90 % Genauigkeit).", "Reach 90 WPM (with at least 90 % accuracy).")),
+    ("wpm110", ("Überschall", "Supersonic"),
+     ("Erreiche 110 WPM (mit mind. 90 % Genauigkeit).", "Reach 110 WPM (with at least 90 % accuracy).")),
+    ("perfekt", ("Fehlerfrei", "Flawless"),
+     ("100 % Genauigkeit bei mindestens 100 Zeichen.", "100 % accuracy over at least 100 characters.")),
+    ("praezise", ("Präzisionsarbeit", "Precision Work"),
+     ("5 Tests hintereinander mit mind. 98 % Genauigkeit.", "5 tests in a row with at least 98 % accuracy.")),
+    ("serie3", ("Dranbleiben", "Keep Going"),
+     ("Übe an 3 Tagen in Folge.", "Practice 3 days in a row.")),
+    ("serie7", ("Eine Woche stark", "Strong Week"),
+     ("Übe an 7 Tagen in Folge.", "Practice 7 days in a row.")),
+    ("serie30", ("Gewohnheit", "Habit"),
+     ("Übe an 30 Tagen in Folge.", "Practice 30 days in a row.")),
+    ("ziel", ("Tagesziel erreicht", "Daily Goal"),
+     ("Erreiche dein Tagesziel an einem Tag.", "Reach your daily goal on one day.")),
+    ("zeit1h", ("Eine Stunde", "One Hour"),
+     ("Übe insgesamt eine Stunde.", "Practice for one hour in total.")),
+    ("zeit10h", ("Zehn Stunden", "Ten Hours"),
+     ("Übe insgesamt zehn Stunden.", "Practice for ten hours in total.")),
+    ("tests50", ("Fleißig", "Diligent"),
+     ("Schließe 50 Tests ab.", "Finish 50 tests.")),
+    ("tests250", ("Unermüdlich", "Tireless"),
+     ("Schließe 250 Tests ab.", "Finish 250 tests.")),
+    ("marathon", ("Marathon", "Marathon"),
+     ("Tippe im freien Modus 10 Minuten am Stück.", "Type for 10 minutes straight in free mode.")),
+    ("zahlen", ("Zahlenprofi", "Number Pro"),
+     ("Zahlen-Modus mit mind. 35 WPM und 95 % Genauigkeit.",
+      "Numbers mode with at least 35 WPM and 95 % accuracy.")),
+    ("zeichen", ("Symbolmeister", "Symbol Master"),
+     ("Sonderzeichen mit mind. 25 WPM und 95 % Genauigkeit.",
+      "Symbols mode with at least 25 WPM and 95 % accuracy.")),
+    ("zitate", ("Belesen", "Well Read"),
+     ("Tippe 10 Zitate.", "Type 10 quotes.")),
+    ("eigener", ("Eigene Worte", "Own Words"),
+     ("Tippe einen eigenen Text.", "Type one of your own texts.")),
+    ("unendlich50", ("Durchhalter", "Stayer"),
+     ("Schaffe 50 Wörter im Unendlich-Modus.", "Get 50 words in endless mode.")),
+    ("unendlich150", ("Unaufhaltsam", "Unstoppable"),
+     ("Schaffe 150 Wörter im Unendlich-Modus.", "Get 150 words in endless mode.")),
+    ("geschichten10", ("Geschichtenerzähler", "Storyteller"),
+     ("Tippe 10 verschiedene Geschichten.", "Type 10 different stories.")),
+    ("geschichten40", ("Bücherwurm", "Bookworm"),
+     ("Tippe alle 40 Geschichten.", "Type all 40 stories.")),
+    ("extrem", ("Extremist", "Extremist"),
+     ("Tippe eine extreme Geschichte mit mind. 95 % Genauigkeit.",
+      "Type an extreme story with at least 95 % accuracy.")),
+    ("zweisprachig", ("Zweisprachig", "Bilingual"),
+     ("Übe auf Deutsch und auf Englisch.", "Practice in German and in English.")),
+    ("eule", ("Nachteule", "Night Owl"),
+     ("Übe zwischen 0 und 4 Uhr nachts.", "Practice between midnight and 4 a.m.")),
+    ("frueh", ("Früher Vogel", "Early Bird"),
+     ("Übe zwischen 4 und 7 Uhr morgens.", "Practice between 4 and 7 a.m.")),
 )
 
-ACHIEVEMENT_NAMES = {a[0]: a[1] for a in ACHIEVEMENTS}
+
+def achievement_text(key):
+    """(Name, Beschreibung) in der aktuellen Sprache."""
+    for k, name, desc in ACHIEVEMENTS:
+        if k == key:
+            return pick(name), pick(desc)
+    return key, ""
 
 
 def achieved(history, goal_minutes, today):

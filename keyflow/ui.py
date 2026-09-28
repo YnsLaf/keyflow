@@ -8,6 +8,7 @@ import time
 from colorama import Back, Fore, Style
 
 from . import terminal as T
+from .i18n import language, tr
 
 RESET = Style.RESET_ALL
 BRIGHT = Style.BRIGHT
@@ -30,14 +31,14 @@ STYLE = {"color": "256", "animate": True}
 # Deckkraft None = die Deckkraft des Terminal-Profils bleibt, wie sie ist.
 # "glas": Farbton 0°, Sättigung 0 %, Helligkeit 10 %, Deckkraft 30 %.
 BACKGROUNDS = {
-    "glas": ("Glas (yns.laf)", (26, 26, 26), 0.30),   # im Mac-Terminal: Profil bleibt
-    "mitternacht": ("Mitternacht", (13, 17, 23), None),
-    "graphit": ("Graphit", (24, 24, 27), None),
-    "ozean": ("Ozean", (8, 24, 38), None),
-    "wald": ("Wald", (12, 28, 20), None),
-    "aubergine": ("Aubergine", (28, 14, 34), None),
-    "schwarz": ("Schwarz", (0, 0, 0), None),
-    "aus": ("wie im Terminal", None, None),
+    "glas": (("Glas (yns.laf)", "Glass (yns.laf)"), (26, 26, 26), 0.30),
+    "mitternacht": (("Mitternacht", "Midnight"), (13, 17, 23), None),
+    "graphit": (("Graphit", "Graphite"), (24, 24, 27), None),
+    "ozean": (("Ozean", "Ocean"), (8, 24, 38), None),
+    "wald": (("Wald", "Forest"), (12, 28, 20), None),
+    "aubergine": (("Aubergine", "Aubergine"), (28, 14, 34), None),
+    "schwarz": (("Schwarz", "Black"), (0, 0, 0), None),
+    "aus": (("wie im Terminal", "terminal default"), None, None),
 }
 
 
@@ -178,8 +179,10 @@ def clip(text, width):
 
 
 def fmt_num(value, digits=0):
-    """Zahl im deutschen Format: 12.345,6"""
+    """Zahl im Format der Sprache: 12.345,6 (de) bzw. 12,345.6 (en)"""
     text = "{:,.{}f}".format(value, digits)
+    if language() != "de":
+        return text
     return text.replace(",", "\0").replace(".", ",").replace("\0", ".")
 
 
@@ -203,8 +206,13 @@ def fmt_clock(seconds):
     return "%d:%02d" % (seconds // 60, seconds % 60)
 
 
+_MONTHS_EN = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
 def fmt_date(d):
-    return d.strftime("%d.%m.%Y")
+    if language() == "de":
+        return d.strftime("%d.%m.%Y")
+    return "%s %d, %d" % (_MONTHS_EN[d.month - 1], d.day, d.year)
 
 
 def acc_color(acc):
@@ -355,7 +363,8 @@ def title_block(title, subtitle="", width=72):
     return [head, DIM + "─" * width + RESET]
 
 
-def message(term, title, lines, footer="Weiter mit beliebiger Taste"):
+def message(term, title, lines, footer=None):
+    footer = footer or tr("Weiter mit beliebiger Taste", "Press any key to continue")
     width = content_width(term)
     draw(term, frame(term, title_block(title, width=width) + [""] + list(lines), footer))
     term.flush_input()
@@ -366,7 +375,7 @@ def message(term, title, lines, footer="Weiter mit beliebiger Taste"):
 def confirm(term, title, question):
     width = content_width(term)
     lines = title_block(title, width=width) + ["", question, "",
-                                               DIM + "[j] Ja    [n] Nein" + RESET]
+                                               DIM + tr("[j] Ja    [n] Nein", "[y] Yes    [n] No") + RESET]
     while True:
         draw(term, frame(term, lines))
         key = term.read_key(0.5)
@@ -376,11 +385,15 @@ def confirm(term, title, question):
             return False
 
 
+REFRESH = "__refresh__"
+
+
 class Item:
     """Ein Menüeintrag. Mit options wird daraus ein Auswahlfeld (◀ ▶)."""
 
     def __init__(self, label="", action=None, options=None, value=None, fmt=None,
-                 on_change=None, hint="", right="", separator=False):
+                 on_change=None, hint="", right="", separator=False, refresh=False):
+        self.refresh = refresh  # nach einer Änderung Menü neu aufbauen (z. B. Sprache)
         self.label = label
         self.action = action
         self.options = options
@@ -448,13 +461,14 @@ def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72,
         if len(menu_lines) > room > 3:
             first = min(max(0, index - room // 2), len(menu_lines) - room)
             menu_lines = menu_lines[first:first + room]
-        if side and content_width(term, width) >= side_col + 24:
+        col = max(side_col, max((vlen(m) for m in menu_lines), default=0) + 3)
+        if side and content_width(term, width) >= col + 24:
             panel = side()
             merged = []
             for i in range(max(len(menu_lines), len(panel))):
                 left = menu_lines[i] if i < len(menu_lines) else ""
                 right = panel[i] if i < len(panel) else ""
-                merged.append(pad(left, side_col) + right)
+                merged.append(pad(left, col) + right)
             menu_lines = merged
         lines += menu_lines
         if hint:
@@ -472,13 +486,19 @@ def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72,
             index = selectable[(pos + 1) % len(selectable)]
         elif key in (T.LEFT, "h") and item.options is not None:
             item.cycle(-1)
+            if item.refresh:
+                return REFRESH, index, key
         elif key in (T.RIGHT, "l") and item.options is not None:
             item.cycle(1)
+            if item.refresh:
+                return REFRESH, index, key
         elif key in (T.ENTER, " "):
             if item.action is not None:
                 return item.action, index, key
             if item.options is not None:
                 item.cycle(1)
+                if item.refresh:
+                    return REFRESH, index, key
         elif key in (T.ESC, "q", T.CTRL_C):
             return None, index, key
         elif key in extra_keys:

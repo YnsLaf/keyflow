@@ -83,7 +83,7 @@ class Terminal:
             colorama.init()
         if not WINDOWS:
             if not sys.stdin.isatty():
-                raise RuntimeError("KeyFlow muss in einem Terminal gestartet werden.")
+                raise RuntimeError("KeyFlow needs to be run in a terminal.")
             self.fd = sys.stdin.fileno()
             self._saved = termios.tcgetattr(self.fd)
             erase = self._saved[6][termios.VERASE]

@@ -30,6 +30,18 @@ class StoriesTest(unittest.TestCase):
         self.assertLess(special("hard"), special("extreme"))
 
 
+class EnglishStoriesTest(unittest.TestCase):
+    def test_same_structure_as_german(self):
+        for level in stories.LEVELS:
+            de = stories.stories_for("de", level)
+            en = stories.stories_for("en", level)
+            self.assertEqual(len(en), len(de))
+            for (_, text_de), (title, text_en) in zip(de, en):
+                self.assertEqual(textgen.normalize_text(text_en), text_en, title)
+                # Übersetzung ungefähr gleich lang wie das Original
+                self.assertLess(abs(len(text_en) - len(text_de)) / len(text_de), 0.25, title)
+
+
 class EndlessSourceTest(unittest.TestCase):
     def test_level_changes_text(self):
         src = textgen.EndlessSource("de")

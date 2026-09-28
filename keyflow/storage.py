@@ -6,7 +6,9 @@ import os
 from pathlib import Path
 
 SETTING_OPTIONS = {
+    "ui_language": ["en", "de"],
     "language": ["de", "en"],
+    "kb_layout": ["de", "en"],
     "difficulty": ["easy", "normal", "hard"],
     "punctuation": [False, True],
     "numbers": [False, True],
@@ -26,7 +28,9 @@ SETTING_OPTIONS = {
 }
 
 DEFAULT_SETTINGS = {
-    "language": "de",
+    "ui_language": "en",
+    "language": "en",
+    "kb_layout": "en",
     "difficulty": "normal",
     "punctuation": False,
     "numbers": False,
@@ -110,7 +114,8 @@ class Store:
         self.key_stats = {}
         self.custom_texts = []
         self.achievements = {}
-        self.load_error = None
+        self.load_error = None       # (Datei, Fehler, Sicherungsdatei)
+        self.needs_language = True   # beim ersten Start nach der Sprache fragen
         self.load()
 
     def load(self):
@@ -126,10 +131,17 @@ class Store:
                 os.replace(self.path, backup)
             except OSError:
                 pass
-            self.load_error = "Die Datei %s war beschädigt (%s) und wurde nach %s verschoben." % (
-                self.path, exc, backup.name)
+            self.load_error = (str(self.path), str(exc), backup.name)
             return
         stored = data.get("settings", {})
+        if _valid(stored.get("ui_language"), SETTING_OPTIONS["ui_language"]):
+            self.needs_language = False
+        elif _valid(stored.get("language"), SETTING_OPTIONS["language"]):
+            # ältere Datei ohne Oberflächensprache: bisherige Textsprache vorschlagen
+            self.settings["ui_language"] = stored["language"]
+        if not _valid(stored.get("kb_layout"), SETTING_OPTIONS["kb_layout"]) and \
+                _valid(stored.get("language"), SETTING_OPTIONS["language"]):
+            self.settings["kb_layout"] = stored["language"]
         for key, options in SETTING_OPTIONS.items():
             if key in stored and _valid(stored[key], options):
                 self.settings[key] = stored[key]

@@ -80,7 +80,7 @@ class StoreTest(unittest.TestCase):
             path.write_text('{"settings": {"language": "xx", "strict": 1, "daily_goal": 30}}',
                             encoding="utf-8")
             store = Store(path)
-            self.assertEqual(store.settings["language"], "de")
+            self.assertEqual(store.settings["language"], "en")
             self.assertIs(store.settings["strict"], False)
             self.assertEqual(store.settings["daily_goal"], 30)
 
