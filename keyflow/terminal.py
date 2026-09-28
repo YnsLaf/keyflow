@@ -137,20 +137,19 @@ class Terminal:
             self.restore_background()
             return
         if self._apple_terminal():
+            if opacity is not None:
+                # Terminal.app kann die Deckkraft per AppleScript nicht setzen – eine neue
+                # Farbe würde das Fenster undurchsichtig machen. Für Glas bleibt der Tab
+                # daher so, wie er im Profil eingestellt ist.
+                self.restore_background()
+                return
             if self._apple_original is None:
                 out = self._apple_script("return background color of t") or ""
                 self._apple_original = [int(n) for n in re.findall(r"-?\d+", out)]
             if len(self._apple_original) < 3:
                 return  # Farbe ließ sich nicht auslesen – dann lieber nichts ändern
             color = [c * 257 for c in rgb]
-            if opacity is not None:
-                color.append(int(round(opacity * 65535)))
-            elif len(self._apple_original) == 4:  # Deckkraft des Nutzers behalten
-                color.append(self._apple_original[3])
-            done = self._apple_script("set background color of t to {%s}" % ", ".join(map(str, color)))
-            if done is None and len(color) == 4:
-                # Falls diese Terminal-Version keine Deckkraft annimmt: nur die Farbe setzen
-                self._apple_script("set background color of t to {%s}" % ", ".join(map(str, color[:3])))
+            self._apple_script("set background color of t to {%s}" % ", ".join(map(str, color)))
         else:
             self.write("\x1b]11;#%02x%02x%02x\x1b\\" % tuple(rgb))
             self._osc_background = True
