@@ -115,6 +115,10 @@ then use that language. You can change it any time in the settings.
 | **Weak keys** | Generates text with exactly the keys you get wrong the most. |
 | **Your own text** | Paste a text or load a `.txt` file. Long texts are practiced in parts. |
 
+<p align="center">
+  <img src="docs/stories.png" alt="KeyFlow stories list (extreme level)" width="700">
+</p>
+
 ## While typing
 
 <p align="center">
