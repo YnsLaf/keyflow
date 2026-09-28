@@ -63,6 +63,8 @@ class App:
         """Farbmodus, Animationen und Terminal-Hintergrund aus den Einstellungen."""
         ui.configure(self.settings)
         _, rgb, opacity = ui.BACKGROUNDS[self.settings["background"]]
+        if opacity is not None:
+            opacity = self.settings["glass_opacity"] / 100.0
         self.term.set_background(rgb, opacity)
 
     def set_ui_language(self, lang):
