@@ -117,6 +117,10 @@ then use that language. You can change it any time in the settings.
 
 ## While typing
 
+<p align="center">
+  <img src="docs/typing.png" alt="KeyFlow while typing, with the on-screen keyboard" width="700">
+</p>
+
 - A keyboard under the text shows which key comes next. With capitals and
   symbols the right ⇧ / ⌥ / AltGr key lights up too, and a hint tells you which
   finger to use. Mistakes flash red.
