@@ -270,11 +270,12 @@ def live_keyboard(lang, next_char, flash=None):
             out.append(" " * max(0, x - col))
             cap = label.center(width)
             if error_key is not None and key_id == error_key:
-                out.append(ui.bg(KEY_ERROR) + Fore.WHITE + BRIGHT + cap + RESET)
-            elif key_id in glow_keys:
-                out.append(ui.bg(glow) + Fore.BLACK + BRIGHT + cap + RESET)
+                out.append(ui.fg(KEY_ERROR) + BRIGHT + cap + RESET)
             elif key_id == " ":
-                out.append(ui.fg(KEY_SPACE_FG) + "─" * width + RESET)
+                color = ui.fg(glow) + BRIGHT if " " in glow_keys else ui.fg(KEY_SPACE_FG)
+                out.append(color + ("━" if " " in glow_keys else "─") * width + RESET)
+            elif key_id in glow_keys:
+                out.append(ui.fg(glow) + BRIGHT + cap + RESET)
             elif key_id in ("f", "j"):
                 pad_l = (width - len(label)) // 2
                 out.append(ui.fg(KEY_HOME_FG) + " " * pad_l + UNDERLINE + label + "\x1b[24m"
@@ -385,14 +386,17 @@ def draw_test(term, test, now, mode, settings, note="", flash=None):
     if settings.get("keyboard", True) and rows >= 20:
         next_char = test.target[test.pos] if test.pos < len(test.target) else None
         kb, hint = live_keyboard(settings["language"], next_char, flash)
-        kb_w = max(vlen(k) for k in kb)
-        kb_margin = " " * max(1, (cols - kb_w) // 2)
+        # Mitte der Grundreihe (A … #) genau unter die Mitte des Textes setzen
+        home = keyboard.layout(settings["language"])[2]
+        home_center = (home[0][0] + home[-1][0] + home[-1][3]) / 2
+        text_center = len(margin) + width / 2
+        kb_margin = " " * max(0, int(round(text_center - home_center)))
         room = rows - 2 - len(lines)
         if room >= len(kb) + 3:
             lines += [""] * (3 if room >= len(kb) + 8 else 1)
             lines += [kb_margin + k for k in kb]
             lines += [""] if room >= len(kb) + 6 else []
-            lines.append(" " * max(1, (cols - len(hint)) // 2) + DIM + hint + RESET)
+            lines.append(" " * max(0, int(round(text_center - len(hint) / 2))) + DIM + hint + RESET)
 
     top = max(0, (rows - len(lines) - 2) // 2)
     screen = [""] * top + lines
