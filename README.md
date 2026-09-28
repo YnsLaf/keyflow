@@ -160,7 +160,7 @@ environment variable `KEYFLOW_HOME` to choose another place.
 
 ```bash
 git clone https://github.com/YnsLaf/keyflow
-cd tipptrainer
+cd keyflow
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 keyflow
