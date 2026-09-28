@@ -1,33 +1,43 @@
-# Keyflow
+# KeyFlow
 
 *made by yns.laf*
 
-Keyflow ist ein Tipptrainer fürs Terminal, geschrieben in Python mit
+KeyFlow ist ein Tipptrainer fürs Terminal, geschrieben in Python mit
 [colorama](https://pypi.org/project/colorama/). Er läuft unter Windows, Linux
 und macOS.
 
 ```
-K E Y F L O W  made by yns.laf                  Serie 4 Tage  ·  Bestwert 85 WPM
+K E Y F L O W  made by yns.laf                              Serie 4 Tage
 Heute 6,5/15 min ████░░░░░░░░          14 Tage ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■
 ────────────────────────────────────────────────────────────────────────
-▶ Zeit-Test               ◀ 30 s ▶
-  Wörter-Test               25 Wörter
-  Freier Modus              Wörter
-  Unendlich-Modus           ab Level 1
-  Geschichten               einfach (10)
-  Sätze                     3 Sätze
-  Zahlen                    25 Zahlen
-  Sonderzeichen             25 Gruppen
-  Gemischt (Profi)          50 Teile
-  Zitate & Sprichwörter     zufällig
-  Schwächen-Training        25 Wörter
-  Eigener Text              2 gespeichert
-  Statistik & Rekorde
-  Aktivität
-  Erfolge                   8/29
-  Einstellungen
-  Beenden
+❯ 1  Weiter: Wörter-Test · 25 Wörter    ╭──────────────────────────╮
+  2  Tippen üben                        │ Noch 9 min bis zum       │
+  3  Texte & Geschichten                │ Tagesziel.               │
+  4  Zahlen & Zeichen                   ╰──┬───────────────────────╯
+  5  Fortschritt                           ╵
+  6  Einstellungen                        ╭───────╮
+  7  Beenden                              │ ◕   ◕ │
+                                          │   ‿   │
+                                          ╰─┬───┬─╯
+                                            ╵   ╵
+                                             Flo
 ```
+
+## Menü
+
+- **Weiter** startet sofort den Modus, den du zuletzt gespielt hast.
+- **Tippen üben:** Zeit-Test, Wörter-Test, Freier Modus, Unendlich-Modus
+- **Texte & Geschichten:** Geschichten, Sätze, Zitate, eigene Texte
+- **Zahlen & Zeichen:** Zahlen, Sonderzeichen, Gemischt, Schwächen-Training
+- **Fortschritt:** Statistik & Rekorde, Aktivitätskalender, Erfolge
+- **Einstellungen**
+
+Jeden Eintrag erreichst du mit den Pfeiltasten oder direkt mit seiner Ziffer. In
+den Unterseiten stellst du Länge oder Stufe mit ← → ein.
+
+**Flo**, das Maskottchen, blinzelt, wippt und gibt Tipps. Es zeigt dir auch, wie
+weit du vom Tagesziel entfernt bist, und erinnert an deine Serie und deinen
+Rekord.
 
 ## Starten
 
@@ -110,7 +120,7 @@ Im Hauptmenü wählst du Länge oder Variante direkt mit **← →** aus.
 
 ## Aussehen
 
-- **Hintergrund:** Beim Start färbt Keyflow den Terminal-Hintergrund ein.
+- **Hintergrund:** Beim Start färbt KeyFlow den Terminal-Hintergrund ein.
   - Standard ist „Glas (yns.laf)“: Farbton 0°, Sättigung 0 %, Helligkeit 10 %,
     Deckkraft 30 %.
   - Außerdem gibt es Mitternacht, Graphit, Ozean, Wald, Aubergine, Schwarz und
@@ -118,22 +128,27 @@ Im Hauptmenü wählst du Länge oder Variante direkt mit **← →** aus.
   - Beim Beenden kommt dein eigener Hintergrund zurück.
   - Im Mac-Terminal passiert das über AppleScript. Beim ersten Start fragt macOS
     eventuell, ob das Terminal gesteuert werden darf.
-  - Das Mac-Terminal kann die Deckkraft nicht per Skript setzen. Bei „Glas“ lässt
-    Keyflow den Hintergrund dort deshalb unverändert. Stell die Werte einmal in
-    deinem Terminal-Profil ein, dann sieht jedes Fenster so aus:
-    *Terminal → Einstellungen → Profile → Fenster → Hintergrund → Farbe & Effekte*
-    → Farbton 0°, Sättigung 0 %, Helligkeit 10 %, Deckkraft 30 %.
-  - Andere Hintergründe machen das Fenster im Mac-Terminal undurchsichtig, solange
-    Keyflow läuft.
-  - In anderen Terminals (iTerm2, Windows Terminal, die meisten Linux-Terminals)
-    funktioniert es über eine Steuersequenz.
+  - Das Mac-Terminal kann die Deckkraft nur über ein Profil setzen. Für „Glas“
+    legt KeyFlow deshalb einmalig das Terminal-Profil **KeyFlow** an: Farbe,
+    30 % Deckkraft, leichte Unschärfe und deine Schrift. Dabei geht kurz ein
+    Fenster auf und wieder zu. Beim Start schaltet KeyFlow deinen Tab auf dieses
+    Profil, beim Beenden zurück. Gefällt es dir, kannst du es unter
+    *Terminal → Einstellungen → Profile* mit *Als Standard* für alle Fenster
+    nutzen.
+  - Andere Hintergründe setzen nur die Farbe und sind im Mac-Terminal nicht
+    transparent.
+- **Titelleiste:** Während KeyFlow läuft, steht oben im Fenster nur „KeyFlow“.
+  Im Mac-Terminal blendet das KeyFlow-Profil dafür Ordner, Prozess und
+  Fenstergröße aus.
 - **Bewegte Farben:**
   - Der Titel und die Fortschrittslinie über dem Text laufen als Farbverlauf.
+  - Die Auswahl im Menü schimmert.
   - Die nächste Taste pulsiert.
   - In den Einstellungen lässt sich das abschalten.
-- **Tastatur beim Tippen:** Unter dem Text ist eine Tastatur zu sehen.
+- **Tastatur beim Tippen:** Unter dem Text ist eine schlichte Tastatur zu sehen.
   - Die nächste Taste leuchtet, bei Großbuchstaben und Sonderzeichen auch die
     passende Umschalt-, AltGr- bzw. ⌥-Taste.
+  - F und J (Grundstellung) sind markiert.
   - Darunter steht, mit welchem Finger du die Taste drückst.
   - Eine falsch gedrückte Taste blinkt kurz rot.
   - Das Wort, an dem du gerade tippst, ist hervorgehoben.
@@ -238,5 +253,6 @@ keyflow/
   screens.py   alle Bildschirme
   ui.py        Farben, Farbverläufe, Menüs, Diagramme
   keyboard.py  Bildschirm-Tastatur und Fingerzuordnung
+  macprofile.py  transparenter Hintergrund im Mac-Terminal
   terminal.py  Tastatur-Eingabe für Windows, Linux und macOS
 ```

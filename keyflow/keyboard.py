@@ -122,7 +122,8 @@ def keys_for(ch, lang):
 
 
 def layout(lang):
-    """Tastatur als Reihen von (beschriftung, tasten-id, breite)."""
+    """Tastatur als Reihen von (beschriftung, tasten-id, breite). Tasten ohne
+    Beschriftung (Tab, Feststell, Enter, Rücktaste) halten nur den Versatz."""
     rows = ROWS[lang]
 
     def keys(row):
@@ -131,16 +132,16 @@ def layout(lang):
     mod_l, mod_r = ("⌥", "⌥") if MAC else ("Alt", "AltGr" if lang == "de" else "Alt")
     if lang == "de":
         return [
-            keys(rows[0]) + [("⌫", "back", 5)],
-            [("⇥", "tab", 5)] + keys(rows[1]) + [("↵", "enter", 3)],
-            [("⇪", "caps", 6)] + keys(rows[2]) + [("", "enter", 2)],
+            keys(rows[0]) + [("", "back", 5)],
+            [("", "tab", 5)] + keys(rows[1]) + [("", "enter", 3)],
+            [("", "caps", 6)] + keys(rows[2]) + [("", "enter", 2)],
             [("⇧", "shift_l", 4)] + keys(rows[3]) + [("⇧", "shift_r", 8)],
             [("", None, 7), (mod_l, "mod_l", 5), ("", " ", 29), (mod_r, "mod_r", 5)],
         ]
     return [
-        keys(rows[0]) + [("⌫", "back", 5)],
-        [("⇥", "tab", 5)] + keys(rows[1]),
-        [("⇪", "caps", 6)] + keys(rows[2]) + [("↵", "enter", 6)],
+        keys(rows[0]) + [("", "back", 5)],
+        [("", "tab", 5)] + keys(rows[1]),
+        [("", "caps", 6)] + keys(rows[2]) + [("", "enter", 6)],
         [("⇧", "shift_l", 8)] + keys(rows[3]) + [("⇧", "shift_r", 8)],
         [("", None, 7), (mod_l, "mod_l", 5), ("", " ", 29), (mod_r, "mod_r", 5)],
     ]

@@ -10,6 +10,8 @@ from contextlib import contextmanager
 
 import colorama
 
+from . import macprofile
+
 WINDOWS = os.name == "nt"
 
 if WINDOWS:  # pragma: no cover - nur unter Windows
@@ -42,6 +44,9 @@ ALT_SCREEN_ON = "\x1b[?1049h"
 ALT_SCREEN_OFF = "\x1b[?1049l"
 # Bildschirm und Scrollback leeren, Cursor nach oben links
 WIPE = "\x1b[2J\x1b[3J\x1b[H"
+# Fenstertitel: alten Titel merken, "KeyFlow" setzen – und beim Beenden zurück
+TITLE_ON = "\x1b[22;0t\x1b]0;KeyFlow\x07"
+TITLE_OFF = "\x1b]0;\x07\x1b[23;0t"
 
 _CSI_KEYS = {
     b"A": UP, b"B": DOWN, b"C": RIGHT, b"D": LEFT, b"3~": DELETE,
@@ -68,6 +73,7 @@ class Terminal:
         self._erase = b"\x7f"
         self._apple_original = None   # ursprüngliche Hintergrundfarbe (Terminal.app)
         self._osc_background = False
+        self._glass = macprofile.GlassProfile()
 
     def __enter__(self):
         fix = getattr(colorama, "just_fix_windows_console", None)
@@ -77,7 +83,7 @@ class Terminal:
             colorama.init()
         if not WINDOWS:
             if not sys.stdin.isatty():
-                raise RuntimeError("Keyflow muss in einem Terminal gestartet werden.")
+                raise RuntimeError("KeyFlow muss in einem Terminal gestartet werden.")
             self.fd = sys.stdin.fileno()
             self._saved = termios.tcgetattr(self.fd)
             erase = self._saved[6][termios.VERASE]
@@ -86,12 +92,12 @@ class Terminal:
             if erase:
                 self._erase = erase
             tty.setcbreak(self.fd)
-        self.write(WIPE + ALT_SCREEN_ON + HIDE_CURSOR + CLEAR + HOME)
+        self.write(TITLE_ON + WIPE + ALT_SCREEN_ON + HIDE_CURSOR + CLEAR + HOME)
         return self
 
     def __exit__(self, *exc):
         self.restore_background()
-        self.write(colorama.Style.RESET_ALL + SHOW_CURSOR + ALT_SCREEN_OFF + WIPE)
+        self.write(colorama.Style.RESET_ALL + SHOW_CURSOR + ALT_SCREEN_OFF + WIPE + TITLE_OFF)
         if self._saved is not None:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self._saved)
         return False
@@ -138,11 +144,13 @@ class Terminal:
             return
         if self._apple_terminal():
             if opacity is not None:
-                # Terminal.app kann die Deckkraft per AppleScript nicht setzen – eine neue
-                # Farbe würde das Fenster undurchsichtig machen. Für Glas bleibt der Tab
-                # daher so, wie er im Profil eingestellt ist.
-                self.restore_background()
+                # Deckkraft geht in Terminal.app nur über ein Profil (siehe macprofile).
+                if self._apple_original:
+                    self.restore_background()
+                cols, rows = self.size()
+                self._glass.apply(rgb, opacity, cols, rows)
                 return
+            self._glass.restore()
             if self._apple_original is None:
                 out = self._apple_script("return background color of t") or ""
                 self._apple_original = [int(n) for n in re.findall(r"-?\d+", out)]
@@ -155,6 +163,7 @@ class Terminal:
             self._osc_background = True
 
     def restore_background(self):
+        self._glass.restore()
         if self._apple_original:
             self._apple_script("set background color of t to {%s}"
                                % ", ".join(map(str, self._apple_original)))

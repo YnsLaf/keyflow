@@ -26,7 +26,7 @@ _ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 # Aktueller Farbmodus und ob sich Farben bewegen (wird aus den Einstellungen gesetzt).
 STYLE = {"color": "256", "animate": True}
 
-# Hintergründe, die Keyflow beim Start ins Terminal setzt: (Name, RGB, Deckkraft).
+# Hintergründe, die KeyFlow beim Start ins Terminal setzt: (Name, RGB, Deckkraft).
 # Deckkraft None = die Deckkraft des Terminal-Profils bleibt, wie sie ist.
 # "glas": Farbton 0°, Sättigung 0 %, Helligkeit 10 %, Deckkraft 30 %.
 BACKGROUNDS = {
@@ -409,8 +409,12 @@ class Item:
             self.on_change(self.value)
 
 
-def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72):
-    """Zeigt ein Menü. Gibt (aktion, index, taste) zurück; aktion None = zurück."""
+def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72,
+             numbered=False, side=None, side_col=34):
+    """Zeigt ein Menü. Gibt (aktion, index, taste) zurück; aktion None = zurück.
+
+    numbered: Einträge mit 1–9 direkt wählbar.
+    side:     Funktion, die Zeilen liefert, die rechts neben dem Menü stehen."""
     selectable = [i for i, it in enumerate(items) if not it.separator]
     if index not in selectable:
         index = selectable[0]
@@ -426,6 +430,9 @@ def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72):
             active = i == index
             glow = fg(hsv(0.5 + clock() * 0.12, 0.55, 1.0))
             marker = glow + BRIGHT + "❯ " if active else "  "
+            if numbered:
+                n = selectable.index(i) + 1
+                marker += (DIM + "%d  " % n + RESET) if n <= 9 else "   "
             label = (BRIGHT + TEXT if active else SOFT) + pad(it.label, label_w) + RESET
             extra = ""
             if it.options is not None:
@@ -441,6 +448,14 @@ def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72):
         if len(menu_lines) > room > 3:
             first = min(max(0, index - room // 2), len(menu_lines) - room)
             menu_lines = menu_lines[first:first + room]
+        if side and content_width(term, width) >= side_col + 24:
+            panel = side()
+            merged = []
+            for i in range(max(len(menu_lines), len(panel))):
+                left = menu_lines[i] if i < len(menu_lines) else ""
+                right = panel[i] if i < len(panel) else ""
+                merged.append(pad(left, side_col) + right)
+            menu_lines = merged
         lines += menu_lines
         if hint:
             lines += ["", DIM + hint + RESET]
@@ -468,3 +483,7 @@ def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72):
             return None, index, key
         elif key in extra_keys:
             return item.action, index, key
+        elif numbered and len(key) == 1 and key.isdigit() and 1 <= int(key) <= min(9, len(selectable)):
+            index = selectable[int(key) - 1]
+            if items[index].action is not None:
+                return items[index].action, index, T.ENTER
