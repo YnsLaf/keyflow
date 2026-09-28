@@ -110,9 +110,12 @@ Im Hauptmenü wählst du Länge oder Variante direkt mit **← →** aus.
 
 ## Aussehen
 
-- **Hintergrund:** Beim Start färbt Keyflow den Terminal-Hintergrund ein. Zur Wahl
-  stehen Mitternacht, Graphit, Ozean, Wald, Aubergine, Schwarz und „wie im
-  Terminal“. Beim Beenden kommt dein eigener Hintergrund zurück.
+- **Hintergrund:** Beim Start färbt Keyflow den Terminal-Hintergrund ein.
+  - Standard ist „Glas (yns.laf)“: Farbton 0°, Sättigung 0 %, Helligkeit 10 %,
+    Deckkraft 30 %.
+  - Außerdem gibt es Mitternacht, Graphit, Ozean, Wald, Aubergine, Schwarz und
+    „wie im Terminal“.
+  - Beim Beenden kommt dein eigener Hintergrund zurück.
   - Im Mac-Terminal passiert das über AppleScript. Beim ersten Start fragt macOS
     eventuell, ob das Terminal gesteuert werden darf.
   - Die Deckkraft deines Profils bleibt erhalten.

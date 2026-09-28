@@ -58,7 +58,8 @@ class App:
     def apply_look(self):
         """Farbmodus, Animationen und Terminal-Hintergrund aus den Einstellungen."""
         ui.configure(self.settings)
-        self.term.set_background(ui.BACKGROUNDS[self.settings["background"]][1])
+        _, rgb, opacity = ui.BACKGROUNDS[self.settings["background"]]
+        self.term.set_background(rgb, opacity)
 
     def run(self):
         self.apply_look()

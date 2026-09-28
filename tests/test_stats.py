@@ -84,6 +84,14 @@ class StoreTest(unittest.TestCase):
             self.assertIs(store.settings["strict"], False)
             self.assertEqual(store.settings["daily_goal"], 30)
 
+    def test_old_files_get_new_default_background(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "daten.json"
+            path.write_text('{"version": 1, "settings": {"background": "mitternacht"}}', encoding="utf-8")
+            self.assertEqual(Store(path).settings["background"], "glas")
+            path.write_text('{"version": 2, "settings": {"background": "ozean"}}', encoding="utf-8")
+            self.assertEqual(Store(path).settings["background"], "ozean")
+
     def test_broken_file_is_moved_away(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "daten.json"

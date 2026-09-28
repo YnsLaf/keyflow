@@ -130,8 +130,9 @@ class Terminal:
             return None
         return done.stdout if done.returncode == 0 else None
 
-    def set_background(self, rgb):
-        """Setzt die Hintergrundfarbe; None stellt die ursprüngliche wieder her."""
+    def set_background(self, rgb, opacity=None):
+        """Setzt die Hintergrundfarbe (und im Mac-Terminal die Deckkraft 0–1);
+        rgb None stellt die ursprüngliche Farbe wieder her."""
         if rgb is None:
             self.restore_background()
             return
@@ -142,9 +143,14 @@ class Terminal:
             if len(self._apple_original) < 3:
                 return  # Farbe ließ sich nicht auslesen – dann lieber nichts ändern
             color = [c * 257 for c in rgb]
-            if len(self._apple_original) == 4:  # Deckkraft des Nutzers behalten
+            if opacity is not None:
+                color.append(int(round(opacity * 65535)))
+            elif len(self._apple_original) == 4:  # Deckkraft des Nutzers behalten
                 color.append(self._apple_original[3])
-            self._apple_script("set background color of t to {%s}" % ", ".join(map(str, color)))
+            done = self._apple_script("set background color of t to {%s}" % ", ".join(map(str, color)))
+            if done is None and len(color) == 4:
+                # Falls diese Terminal-Version keine Deckkraft annimmt: nur die Farbe setzen
+                self._apple_script("set background color of t to {%s}" % ", ".join(map(str, color[:3])))
         else:
             self.write("\x1b]11;#%02x%02x%02x\x1b\\" % tuple(rgb))
             self._osc_background = True
