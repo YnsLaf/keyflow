@@ -1010,7 +1010,8 @@ def settings_screen(term, store, on_look_change=None, on_language_change=None):
         width = content_width(term)
         action, index, _ = run_menu(
             term, lambda: title_block(tr("Einstellungen", "Settings"),
-                                      tr("Datei: %s", "File: %s") % store.path, width), items, index,
+                                      tr("Datei: %s", "File: %s") % ui.short_path(store.path), width),
+            items, index,
             footer=tr("↑↓ auswählen · ←→/Enter ändern · Esc zurück", "↑↓ choose · ←→/Enter change · Esc back"),
             width=width)
         if action == ui.REFRESH:
@@ -1137,7 +1138,7 @@ def info_header(store, updater, width):
         (tr("Installiert", "Installed"), method + DIM + "  ·  " + tr("Update-Befehl: ", "update command: ")
          + updates.update_command_text() + RESET),
         ("Python", "%d.%d.%d" % sys.version_info[:3] + DIM + "  ·  " + system + RESET),
-        (tr("Daten", "Data"), DIM + str(store.path) + RESET),
+        (tr("Daten", "Data"), DIM + ui.short_path(store.path) + RESET),
     ]
     lines = title_block("Info", tr("alles über KeyFlow", "all about KeyFlow"), width)
     lines += [DIM + pad(name, label_w) + RESET + value for name, value in rows]

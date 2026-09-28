@@ -192,6 +192,13 @@ def fmt_num(value, digits=0):
     return text.replace(",", "\0").replace(".", ",").replace("\0", ".")
 
 
+def short_path(path):
+    """Pfad mit ~ statt Home-Ordner – so steht der Benutzername nicht auf Screenshots."""
+    import os
+    text, home = str(path), os.path.expanduser("~")
+    return "~" + text[len(home):] if home and text.startswith(home) else text
+
+
 def fmt_minutes(seconds):
     minutes = seconds / 60
     return fmt_num(minutes, 1 if 0 < minutes < 10 else 0)

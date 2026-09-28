@@ -160,6 +160,10 @@ available, how KeyFlow was installed, your Python version and where your data is
 stored. It also has buttons that open GitHub and PyPI in your browser, and an
 **Update now** button that runs the right update command for you.
 
+<p align="center">
+  <img src="docs/info.png" alt="KeyFlow info page" width="700">
+</p>
+
 On start KeyFlow asks PyPI in the background whether a newer version exists. If
 so, Flow tells you and the menu shows "Update!". You can turn this off in the
 settings (or set `KEYFLOW_NO_UPDATE_CHECK=1`).
