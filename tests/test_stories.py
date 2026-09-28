@@ -38,7 +38,7 @@ class EnglishStoriesTest(unittest.TestCase):
             self.assertEqual(len(en), len(de))
             for (_, text_de), (title, text_en) in zip(de, en):
                 self.assertEqual(textgen.normalize_text(text_en), text_en, title)
-                # Übersetzung ungefähr gleich lang wie das Original
+                # translation roughly as long as the original
                 self.assertLess(abs(len(text_en) - len(text_de)) / len(text_de), 0.25, title)
 
 

@@ -1,16 +1,16 @@
-"""Die Tipp-Logik: vergleicht Eingaben mit dem Zieltext und berechnet Werte.
+"""The typing logic: compares input with the target text and computes the stats.
 
-Bewusst ohne Ein-/Ausgabe, damit sie sich einfach testen lässt."""
+Deliberately free of input/output so it is easy to test."""
 
 import bisect
 import statistics
 
 
 def wrap(text, width):
-    """Bricht text an Leerzeichen in Zeilen von höchstens width Zeichen um.
+    """Wraps text at spaces into lines of at most width characters.
 
-    Gibt die Startindizes der Zeilen zurück. Das Leerzeichen am Zeilenende
-    bleibt Teil der Zeile, damit jeder Index genau einer Zeile gehört."""
+    Returns the start index of every line. The space at the end of a line
+    stays part of that line, so every index belongs to exactly one line."""
     width = max(1, width)
     starts = [0]
     start = 0
@@ -27,19 +27,19 @@ class TypingTest:
         self.target = target
         self.strict = strict
         self.typed = []
-        self.marks = []           # True = Zeichen richtig getippt
-        self.correct = 0          # aktuell richtige Zeichen
-        self.keystrokes = 0       # alle Zeichen-Anschläge (ohne Rücktaste)
+        self.marks = []           # True = character typed correctly
+        self.correct = 0          # currently correct characters
+        self.keystrokes = 0       # all character keystrokes (without backspace)
         self.correct_keystrokes = 0
         self.errors = 0
         self.key_attempts = {}
         self.key_errors = {}
         self.start_time = None
         self.end_time = None
-        self.samples = []         # pro Sekunde: (richtige Zeichen, Anschläge)
+        self.samples = []         # per second: (correct characters, keystrokes)
         self._wrap_cache = None
 
-    # --- Zustand ---------------------------------------------------------
+    # --- State -----------------------------------------------------------
     @property
     def pos(self):
         return len(self.typed)
@@ -58,10 +58,10 @@ class TypingTest:
     def extend(self, more):
         self.target += more
 
-    # --- Eingaben --------------------------------------------------------
+    # --- Input ----------------------------------------------------------
     def type_char(self, ch, now):
-        """Verarbeitet ein Zeichen. Gibt True/False (richtig/falsch) zurück,
-        oder None, wenn nichts mehr getippt werden kann."""
+        """Handles one character. Returns True/False (correct/wrong),
+        or None when nothing more can be typed."""
         if self.finished or self.complete():
             return None
         if self.start_time is None:
@@ -95,7 +95,7 @@ class TypingTest:
         while self.typed and self.target[self.pos - 1] != " ":
             self.backspace()
 
-    # --- Zeit & Messwerte ------------------------------------------------
+    # --- Time & stats --------------------------------------------------
     def elapsed(self, now):
         if self.start_time is None:
             return 0.0
@@ -137,7 +137,7 @@ class TypingTest:
         return self.target.count(" ") + 1
 
     def per_second(self):
-        """WPM und Roh-WPM für jede volle Sekunde."""
+        """WPM and raw WPM for every full second."""
         wpm, raw = [], []
         prev_c, prev_k = 0, 0
         for c, k in self.samples:
@@ -173,7 +173,7 @@ class TypingTest:
             "key_errors": dict(self.key_errors),
         }
 
-    # --- Darstellung -----------------------------------------------------
+    # --- Display -------------------------------------------------------
     def line_starts(self, width):
         key = (len(self.target), width)
         if self._wrap_cache is None or self._wrap_cache[0] != key:

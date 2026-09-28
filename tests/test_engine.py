@@ -52,7 +52,7 @@ class TypingTestTest(unittest.TestCase):
         for i in range(50):
             t.type_char("x", i * 0.1)
         t.finish(60.0)
-        # 50 Zeichen = 10 Wörter in einer Minute
+        # 50 characters = 10 words in one minute
         self.assertAlmostEqual(t.wpm(60.0), 10.0)
         result = t.result()
         self.assertEqual(result["chars"], 50)

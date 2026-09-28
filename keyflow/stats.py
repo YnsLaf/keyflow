@@ -1,4 +1,4 @@
-"""Auswertungen: Rekorde, Serien, Tageswerte, schwache Tasten und Erfolge."""
+"""Evaluations: records, streaks, daily totals, weak keys and achievements."""
 
 from datetime import date, timedelta
 
@@ -29,8 +29,8 @@ def daily_tests(history):
 
 
 def streaks(days, today):
-    """(aktuelle Serie, längste Serie) in Tagen. Die aktuelle Serie bleibt
-    bestehen, solange gestern geübt wurde – heute ist dann noch Zeit."""
+    """(current streak, longest streak) in days. The current streak stays alive
+    as long as you practiced yesterday – there is still time today."""
     active = set(days)
     if not active:
         return 0, 0
@@ -48,13 +48,13 @@ def streaks(days, today):
 
 
 def record_value(entry):
-    """Womit Rekorde verglichen werden: im Unendlich-Modus die geschafften
-    Wörter, sonst das Tempo."""
+    """What records are compared by: words reached in endless mode,
+    otherwise speed."""
     return entry.get("score", entry["wpm"])
 
 
 def record_eligible(entry):
-    # Ein paar Sekunden im freien Modus sollen keinen Rekord ergeben.
+    # a few seconds in free mode should not count as a record
     return not (entry["mode"].startswith("frei") and entry.get("duration", 0) < 30)
 
 
@@ -83,7 +83,7 @@ def mode_sort_key(mode):
 
 
 def merged_key_stats(key_stats):
-    """Fasst Groß- und Kleinbuchstaben zusammen (A und a = Taste A)."""
+    """Merges upper and lower case (A and a = key A)."""
     merged = {}
     for ch, (attempts, errors) in key_stats.items():
         key = ch.lower() if ch.isalpha() else ch
@@ -107,7 +107,7 @@ def average(values):
     return sum(values) / len(values) if values else 0.0
 
 
-# --- Erfolge ----------------------------------------------------------------
+# --- Achievements-------------------------------------------------------------
 
 ACHIEVEMENTS = (
     ("start", ("Erste Schritte", "First Steps"),
@@ -175,7 +175,7 @@ ACHIEVEMENTS = (
 
 
 def achievement_text(key):
-    """(Name, Beschreibung) in der aktuellen Sprache."""
+    """(name, description) in the current language."""
     for k, name, desc in ACHIEVEMENTS:
         if k == key:
             return pick(name), pick(desc)
@@ -183,7 +183,7 @@ def achievement_text(key):
 
 
 def achieved(history, goal_minutes, today):
-    """Menge aller Erfolge, deren Bedingung der Verlauf erfüllt."""
+    """Set of all achievements whose condition the history meets."""
     got = set()
     if not history:
         return got

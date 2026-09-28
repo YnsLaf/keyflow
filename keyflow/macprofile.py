@@ -1,9 +1,8 @@
-"""Transparenter Hintergrund im Mac-Terminal (Terminal.app).
+"""Transparent background in the macOS Terminal (Terminal.app).
 
-Terminal.app kann die Deckkraft nicht per AppleScript setzen – nur ein Profil
-kann das. KeyFlow legt deshalb einmalig das Profil "KeyFlow" an (Farbe,
-Deckkraft und Schrift) und schaltet den eigenen Tab beim Start darauf um.
-Beim Beenden wird wieder das vorherige Profil eingestellt."""
+Terminal.app cannot set the opacity via AppleScript – only a profile can.
+So KeyFlow creates a "KeyFlow" profile once (color, opacity and font) and
+switches its own tab to it on start. On quit the previous profile comes back."""
 
 import os
 import plistlib
@@ -12,8 +11,8 @@ import sys
 import tempfile
 import time
 
-PROFILE = "KeyFlow"          # Profilname-Anfang; die Deckkraft wird angehängt ("KeyFlow 70")
-LEGACY_PROFILE = "KeyFlow"   # altes Profil mit 30 % aus Version 1.4.0
+PROFILE = "KeyFlow"          # profile name prefix; the opacity is appended ("KeyFlow 70")
+LEGACY_PROFILE = "KeyFlow"   # old profile with 30 % from version 1.4.0
 TITLE = "KeyFlow"
 
 
@@ -42,7 +41,7 @@ def run_script(script, timeout=5):
 
 
 def tab_script(action):
-    """AppleScript für genau den Tab, in dem KeyFlow läuft (Variable t)."""
+    """AppleScript for exactly the tab KeyFlow runs in (variable t)."""
     tty = _tty()
     if not tty:
         return None
@@ -57,7 +56,7 @@ def tab_script(action):
 
 
 def ns_color(r, g, b, a=1.0):
-    """Eine Farbe so verpackt, wie Terminal-Profile sie speichern (NSKeyedArchiver)."""
+    """A color packed the way Terminal profiles store it (NSKeyedArchiver)."""
     archive = {
         "$archiver": "NSKeyedArchiver",
         "$version": 100000,
@@ -79,7 +78,7 @@ def profile_data(rgb, opacity, columns, rows):
         "type": "Window Settings",
         "ProfileCurrentVersion": 2.07,
         "BackgroundColor": ns_color(r, g, b, opacity),
-        "BackgroundBlur": 0.85,   # stark verwischen, damit Text auch vor Hellem lesbar bleibt
+        "BackgroundBlur": 0.85,   # strong blur so text stays readable in front of bright windows
         "TextColor": ns_color(0.92, 0.92, 0.92),
         "TextBoldColor": ns_color(1, 1, 1),
         "CursorColor": ns_color(0.85, 0.85, 0.85),
@@ -87,7 +86,7 @@ def profile_data(rgb, opacity, columns, rows):
         "columnCount": columns,
         "rowCount": rows,
         "UseBrightBold": True,
-        # Titelleiste: nur "KeyFlow" – ohne Ordner, Prozess und Fenstergröße
+        # title bar: only "KeyFlow" – no folder, process or window size
         "WindowTitle": TITLE,
         "ShowActiveProcessInTitle": False,
         "ShowActiveProcessArgumentsInTitle": False,
@@ -109,8 +108,8 @@ def _profile_exists(name):
 
 
 def _import_profile(name, rgb, opacity, columns, rows):
-    """Öffnet eine .terminal-Datei: Terminal übernimmt sie als Profil und öffnet
-    dafür ein Fenster, das gleich wieder geschlossen wird."""
+    """Opens a .terminal file: Terminal imports it as a profile and opens a
+    window for it, which is closed again right away."""
     folder = tempfile.mkdtemp(prefix="keyflow-")
     path = os.path.join(folder, name + ".terminal")
     with open(path, "wb") as fh:
@@ -142,7 +141,7 @@ def _import_profile(name, rgb, opacity, columns, rows):
 
 
 def _set_title_options(name):
-    """Auch bei einem schon vorhandenen Profil: Titel nur "KeyFlow"."""
+    """Also for an existing profile: title shows only "KeyFlow"."""
     options = [
         'set custom title of s to "%s"' % TITLE,
         "set title displays custom title of s to true",
@@ -158,7 +157,7 @@ def _set_title_options(name):
 
 
 def _remove_legacy_profile():
-    """Entfernt das alte Profil "KeyFlow" (30 %), falls es noch existiert."""
+    """Removes the old "KeyFlow" profile (30 %) if it still exists."""
     if _profile_exists(LEGACY_PROFILE):
         run_script('tell application "Terminal"\n'
                    '  try\n    delete settings set "%s"\n  end try\n'
@@ -170,7 +169,7 @@ def _is_keyflow_profile(name):
 
 
 class GlassProfile:
-    """Schaltet den eigenen Tab auf ein KeyFlow-Profil und wieder zurück."""
+    """Switches our own tab to a KeyFlow profile and back again."""
 
     def __init__(self):
         self.previous = None
@@ -186,7 +185,7 @@ class GlassProfile:
                           '(font size of current settings of t)')
         if not _profile_exists(name) and not _import_profile(name, rgb, opacity, columns, rows):
             return False
-        # Schrift aus dem bisherigen Profil übernehmen
+        # keep the font of the previous profile
         if font and "|" in font:
             font_name, size = font.split("|", 1)
             run_script('tell application "Terminal"\n'
@@ -197,7 +196,7 @@ class GlassProfile:
         if tab_script('set current settings of t to settings set "%s"' % name) is None:
             return False
         tab_script('set custom title of t to "%s"' % TITLE)
-        # Beim Wechsel zwischen zwei KeyFlow-Stufen das ursprüngliche Profil behalten
+        # when switching between two KeyFlow levels, keep the original profile
         if self.previous is None and not _is_keyflow_profile(current):
             self.previous = current
         _remove_legacy_profile()

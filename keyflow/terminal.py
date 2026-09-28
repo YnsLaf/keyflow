@@ -1,4 +1,4 @@
-"""Tastatur-Eingabe und Bildschirmsteuerung für Windows, Linux und macOS."""
+"""Keyboard input and screen control for Windows, Linux and macOS."""
 
 import os
 import re
@@ -14,14 +14,14 @@ from . import macprofile
 
 WINDOWS = os.name == "nt"
 
-if WINDOWS:  # pragma: no cover - nur unter Windows
+if WINDOWS:  # pragma: no cover - Windows only
     import msvcrt
 else:
     import select
     import termios
     import tty
 
-# Namen für Sondertasten. Normale Zeichen kommen als einzelnes Zeichen zurück.
+# names for special keys; normal characters come back as a single character
 UP = "<oben>"
 DOWN = "<unten>"
 LEFT = "<links>"
@@ -42,9 +42,9 @@ HIDE_CURSOR = "\x1b[?25l"
 SHOW_CURSOR = "\x1b[?25h"
 ALT_SCREEN_ON = "\x1b[?1049h"
 ALT_SCREEN_OFF = "\x1b[?1049l"
-# Bildschirm und Scrollback leeren, Cursor nach oben links
+# clear screen and scrollback, cursor to the top left
 WIPE = "\x1b[2J\x1b[3J\x1b[H"
-# Fenstertitel: alten Titel merken, "KeyFlow" setzen – und beim Beenden zurück
+# window title: remember the old title, set "KeyFlow" – and restore it on quit
 TITLE_ON = "\x1b[22;0t\x1b]0;KeyFlow\x07"
 TITLE_OFF = "\x1b]0;\x07\x1b[23;0t"
 
@@ -64,14 +64,14 @@ def is_char(key):
 
 
 class Terminal:
-    """Schaltet das Terminal in den Tasten-Modus und zurück (mit `with`)."""
+    """Switches the terminal into key mode and back (with `with`)."""
 
     def __init__(self):
         self.out = sys.stdout
         self.fd = None
         self._saved = None
         self._erase = b"\x7f"
-        self._apple_original = None   # ursprüngliche Hintergrundfarbe (Terminal.app)
+        self._apple_original = None   # original background color (Terminal.app)
         self._osc_background = False
         self._glass = macprofile.GlassProfile()
 
@@ -79,7 +79,7 @@ class Terminal:
         fix = getattr(colorama, "just_fix_windows_console", None)
         if fix:
             fix()
-        else:  # ältere colorama-Versionen
+        else:  # older colorama versions
             colorama.init()
         if not WINDOWS:
             if not sys.stdin.isatty():
@@ -102,7 +102,7 @@ class Terminal:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self._saved)
         return False
 
-    # --- Ausgabe ---------------------------------------------------------
+    # --- Output ----------------------------------------------------------
     def write(self, text):
         self.out.write(text)
         self.out.flush()
@@ -111,12 +111,12 @@ class Terminal:
         size = shutil.get_terminal_size((80, 24))
         return max(20, size.columns), max(8, size.lines)
 
-    # --- Hintergrundfarbe des Terminals ---------------------------------
+    # --- Terminal background color -------------------------------------
     def _apple_terminal(self):
         return sys.platform == "darwin" and os.environ.get("TERM_PROGRAM") == "Apple_Terminal"
 
     def _apple_script(self, action):
-        """Führt AppleScript für genau diesen Terminal-Tab aus (erkannt am tty)."""
+        """Runs AppleScript for exactly this Terminal tab (found by its tty)."""
         try:
             tty_name = os.ttyname(sys.stdin.fileno())
         except OSError:
@@ -137,14 +137,14 @@ class Terminal:
         return done.stdout if done.returncode == 0 else None
 
     def set_background(self, rgb, opacity=None):
-        """Setzt die Hintergrundfarbe (und im Mac-Terminal die Deckkraft 0–1);
-        rgb None stellt die ursprüngliche Farbe wieder her."""
+        """Sets the background color (and in the macOS Terminal the opacity 0–1);
+        rgb None restores the original color."""
         if rgb is None:
             self.restore_background()
             return
         if self._apple_terminal():
             if opacity is not None:
-                # Deckkraft geht in Terminal.app nur über ein Profil (siehe macprofile).
+                # in Terminal.app opacity only works through a profile (see macprofile)
                 if self._apple_original:
                     self.restore_background()
                 cols, rows = self.size()
@@ -155,7 +155,7 @@ class Terminal:
                 out = self._apple_script("return background color of t") or ""
                 self._apple_original = [int(n) for n in re.findall(r"-?\d+", out)]
             if len(self._apple_original) < 3:
-                return  # Farbe ließ sich nicht auslesen – dann lieber nichts ändern
+                return  # could not read the color – better change nothing
             color = [c * 257 for c in rgb]
             self._apple_script("set background color of t to {%s}" % ", ".join(map(str, color)))
         else:
@@ -177,7 +177,7 @@ class Terminal:
 
     @contextmanager
     def cooked(self):
-        """Normaler Zeilen-Modus, z. B. für input()."""
+        """Normal line mode, e.g. for input()."""
         self.write(colorama.Style.RESET_ALL + CLEAR + HOME + SHOW_CURSOR)
         if self._saved is not None:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self._saved)
@@ -188,15 +188,15 @@ class Terminal:
                 tty.setcbreak(self.fd)
             self.write(HIDE_CURSOR + CLEAR + HOME)
 
-    # --- Eingabe ---------------------------------------------------------
+    # --- Input ----------------------------------------------------------
     def read_key(self, timeout=None):
-        """Wartet auf eine Taste; gibt None zurück, wenn timeout abläuft."""
+        """Waits for a key; returns None when the timeout runs out."""
         if WINDOWS:
             return self._read_key_windows(timeout)
         return self._read_key_posix(timeout)
 
     def flush_input(self):
-        """Verwirft Tasten, die noch im Puffer liegen."""
+        """Drops keys that are still in the buffer."""
         if WINDOWS:
             while msvcrt.kbhit():
                 msvcrt.getwch()
@@ -224,14 +224,14 @@ class Terminal:
             return TAB
         if b == self._erase or b == b"\x7f":
             return BACKSPACE
-        if b in (b"\x08", b"\x17"):  # Strg+Rücktaste bzw. Strg+W
+        if b in (b"\x08", b"\x17"):  # Ctrl+Backspace or Ctrl+W
             return CTRL_BACKSPACE
         if b == b"\x03":
             return CTRL_C
         first = b[0]
         if first < 0x20:
             return None
-        if first >= 0xC0:  # mehrbytiges UTF-8-Zeichen (ä, ö, ü, ß, € …)
+        if first >= 0xC0:  # multi-byte UTF-8 character (ä, ö, ü, ß, € …)
             need = 1 if first < 0xE0 else 2 if first < 0xF0 else 3
             for _ in range(need):
                 nxt = self._byte(0.05)
@@ -255,20 +255,20 @@ class Terminal:
                 if 0x40 <= c[0] <= 0x7E:
                     break
             return _CSI_KEYS.get(seq)
-        if nxt in (b"\x7f", b"\x08"):  # Alt+Rücktaste (macOS: Option+Rücktaste)
+        if nxt in (b"\x7f", b"\x08"):  # Alt+Backspace (macOS: Option+Backspace)
             return CTRL_BACKSPACE
         if nxt == b"\x1b":
             return ESC
         return None
 
-    def _read_key_windows(self, timeout):  # pragma: no cover - nur unter Windows
+    def _read_key_windows(self, timeout):  # pragma: no cover - Windows only
         deadline = None if timeout is None else time.monotonic() + timeout
         while True:
             while msvcrt.kbhit():
                 ch = msvcrt.getwch()
                 if ch in ("\x00", "\xe0"):
                     if ch == "\xe0" and not msvcrt.kbhit():
-                        return ch  # das Zeichen "à"
+                        return ch  # the character "à"
                     key = _WIN_SPECIAL.get(msvcrt.getwch())
                     if key:
                         return key

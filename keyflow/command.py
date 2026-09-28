@@ -57,7 +57,7 @@ def _writable_path_dir():
         if not entry or entry in SYSTEM_DIRS:
             continue
         path = Path(os.path.expanduser(entry))
-        # nur Ordner im eigenen Home oder bekannte Homebrew-/local-Ordner
+        # only folders inside the home folder or the usual Homebrew/local folders
         if not (str(path).startswith(home) or str(path) in ("/opt/homebrew/bin", "/usr/local/bin")):
             continue
         if path.is_dir() and os.access(str(path), os.W_OK):

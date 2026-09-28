@@ -208,7 +208,7 @@ moving colors · keyboard while typing · update check · daily goal · reset st
 
 ## 💾 Data
 
-Everything is stored in `~/.keyflow/daten.json`. Use `keyflow --data FILE` or the
+Everything is stored in `~/.keyflow/data.json`. Use `keyflow --data FILE` or the
 environment variable `KEYFLOW_HOME` to choose another place.
 
 ## 🛠️ Development

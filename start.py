@@ -1,4 +1,4 @@
-"""Startet KeyFlow: python start.py"""
+"""Starts KeyFlow from a source checkout: python start.py"""
 
 import sys
 

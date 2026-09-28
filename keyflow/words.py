@@ -1,4 +1,4 @@
-"""Wortlisten, Satzbausteine und Zitate für die Textgenerierung."""
+"""Word lists, sentence parts and quotes for the text generator."""
 
 
 def _unique(text):
@@ -61,8 +61,8 @@ ancient curious honest perfect special different important possible beautiful
 wonderful difficult interesting
 """)
 
-# --- Satzbausteine Deutsch -------------------------------------------------
-# Alle Subjekte stehen in der 3. Person Singular, damit die Verben passen.
+# --- German sentence parts ------------------------------------------------
+# all subjects are 3rd person singular so the verbs fit
 DE_SUBJECTS = (
     "Der Hund", "Die Katze", "Mein Nachbar", "Unsere Lehrerin", "Das Kind",
     "Der alte Mann", "Eine junge Frau", "Der Koch", "Die Ärztin", "Mein Bruder",
@@ -70,7 +70,7 @@ DE_SUBJECTS = (
     "Jeder Schüler", "Ein Tourist", "Die Musikerin", "Der Pilot",
 )
 
-# (Verb, Rest) – der Rest darf eine abgetrennte Vorsilbe enthalten ("auf", "nach").
+# (verb, rest) – the rest may contain a separated verb prefix ("auf", "nach")
 DE_VERBS = (
     ("liest", "ein spannendes Buch"),
     ("trinkt", "einen heißen Kaffee"),
@@ -109,7 +109,7 @@ DE_TIMES = (
 
 DE_QUESTIONS = ("Warum", "Wann", "Wo", "Wie oft")
 
-# --- Satzbausteine Englisch ------------------------------------------------
+# --- English sentence parts ------------------------------------------------
 EN_SUBJECTS = (
     "The dog", "The cat", "My neighbor", "The teacher", "A young woman",
     "The old man", "The cook", "The doctor", "My brother", "Her sister",
@@ -117,7 +117,7 @@ EN_SUBJECTS = (
     "The pilot",
 )
 
-# (3. Person, Grundform, Rest)
+# (3rd person, base form, rest)
 EN_VERBS = (
     ("reads", "read", "an exciting book"),
     ("drinks", "drink", "a hot coffee"),
@@ -154,7 +154,7 @@ EN_TIMES = (
 
 EN_QUESTIONS = ("Why does", "When does", "Where does", "How often does")
 
-# --- Zahlen & Sonderzeichen ------------------------------------------------
+# --- Numbers & symbols ----------------------------------------------------
 UNITS = {
     "de": ("kg", "km", "m", "cm", "mm", "ml", "l", "g", "GB", "MB", "°C", "Std.", "Min."),
     "en": ("kg", "km", "mi", "lb", "oz", "ml", "GB", "MB", "ft", "in", "mph"),
@@ -166,7 +166,7 @@ IDENTIFIERS = (
     "config", "value", "result", "key", "id", "total", "info", "tmp", "x", "y",
 )
 
-# --- Zitate & Sprichwörter (gemeinfrei) -------------------------------------
+# --- Quotes & proverbs (public domain) -------------------------------------
 QUOTES = {
     "de": (
         ("Übung macht den Meister.", "Sprichwort"),

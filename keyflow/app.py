@@ -1,4 +1,4 @@
-"""Programmablauf: Hauptmenü, Tests starten, Ergebnisse speichern."""
+"""App flow: main menu, running tests, saving results."""
 
 import argparse
 import random
@@ -16,25 +16,25 @@ from .storage import Store
 from . import __version__
 
 
-ENDLESS_START = 10.0         # Startzeit im Unendlich-Modus (Sekunden)
-ENDLESS_MAX = 20.0           # mehr Zeitvorrat als das gibt es nicht
-ENDLESS_PENALTY = 1.0        # Sekunden Abzug pro Tippfehler
+ENDLESS_START = 10.0         # starting time in endless mode (seconds)
+ENDLESS_MAX = 20.0           # the time bank never grows beyond this
+ENDLESS_PENALTY = 1.0        # seconds lost per typo
 ENDLESS_WORDS_PER_LEVEL = 20
 
 
 def endless_target_wpm(level):
-    """Tempo, mit dem man im jeweiligen Level genau gleich viel Zeit gewinnt, wie
-    man verbraucht. Wer schneller tippt, baut Vorrat auf."""
+    """Speed at which you gain exactly as much time as you spend on this level.
+    Typing faster than this builds up a time bank."""
     return 25 + 5 * level
 
 
 class Mode:
-    """Beschreibt einen Test.
+    """Describes a test.
 
-    kind:  "time" (Zeitlimit), "text" (fester Text), "free" (endlos) oder
-           "endless" (Unendlich-Modus: Zeit läuft ab, richtige Wörter bringen Zeit).
-    source: liefert bei "time"/"free" immer neue Textstücke.
-    make_text: liefert bei "text" (text, hinweis)."""
+    kind:  "time" (time limit), "text" (fixed text), "free" (never ends) or
+           "endless" (the clock runs down, correct words add time).
+    source: delivers new pieces of text for "time"/"free".
+    make_text: returns (text, note) for "text"."""
 
     def __init__(self, key, label, kind, limit=0, source=None, make_text=None,
                  on_complete=None, repeatable=True, count_words=False, extra=None):
@@ -47,8 +47,8 @@ class Mode:
         self.on_complete = on_complete
         self.repeatable = repeatable and kind == "text"
         self.count_words = count_words
-        self.extra = extra          # () -> zusätzliche Felder für den Verlauf
-        self.state = None           # Laufzeitwerte des Unendlich-Modus
+        self.extra = extra          # () -> extra fields for the history entry
+        self.state = None           # runtime state of endless mode
 
 
 class App:
@@ -58,9 +58,9 @@ class App:
         self.rng = rng or random.Random()
         i18n.set_language(store.settings["ui_language"])
 
-    # --- Hauptschleife ---------------------------------------------------
+    # --- Main loop -------------------------------------------------------
     def apply_look(self):
-        """Farbmodus, Animationen und Terminal-Hintergrund aus den Einstellungen."""
+        """Color mode, animations and terminal background from the settings."""
         ui.configure(self.settings)
         _, rgb, opacity = ui.BACKGROUNDS[self.settings["background"]]
         if opacity is not None:
@@ -68,7 +68,7 @@ class App:
         self.term.set_background(rgb, opacity)
 
     def set_ui_language(self, lang):
-        """Oberfläche und Übungstexte auf eine Sprache umstellen."""
+        """Switch the interface and the practice texts to one language."""
         i18n.set_language(lang)
         self.settings["ui_language"] = lang
         self.settings["language"] = lang
@@ -105,7 +105,7 @@ class App:
                 self.category(action)
 
     def setup_command(self):
-        """Nach pip install --user: den Befehl keyflow einmalig einrichten."""
+        """After pip install --user: set up the keyflow command once."""
         if self.settings["command_setup"] == "done" or updates.install_method() == "source":
             return
         result = command.setup()
@@ -170,7 +170,7 @@ class App:
             self.open(action)
 
     def open(self, action):
-        """Startet einen Modus oder öffnet einen Bildschirm."""
+        """Starts a mode or opens a screen."""
         if action == "stats":
             screens.stats_screen(self.term, self.store)
         elif action == "activity":
@@ -188,7 +188,7 @@ class App:
             else:
                 self.run_mode(self.build_mode(action))
 
-    # --- Modi ------------------------------------------------------------
+    # --- Modes -----------------------------------------------------------
     @property
     def settings(self):
         return self.store.settings
@@ -292,7 +292,7 @@ class App:
                         "text", make_text=make_weak, count_words=True)
         raise ValueError(action)
 
-    # --- Ablauf eines Tests ----------------------------------------------
+    # --- Running a test ------------------------------------------------
     def run_mode(self, mode):
         text = note = None
         while True:
@@ -328,7 +328,7 @@ class App:
             while len(target) < (150 if endless else 400):
                 target += " " + self._next_chunk(mode)
         test = TypingTest(target, strict=settings["strict"])
-        wrong = None  # (falsch gedrückte Taste, Zeitpunkt) für das rote Aufblinken
+        wrong = None  # (wrongly pressed key, time) for the red flash
         self.term.flush_input()
         while True:
             now = time.monotonic()
@@ -372,7 +372,7 @@ class App:
                     return "done", test
 
     def _endless_step(self, mode, test, ok):
-        """Unendlich-Modus: Fehler kosten Zeit, fertige Wörter bringen Zeit."""
+        """Endless mode: mistakes cost time, finished words add time."""
         state = mode.state
         now_elapsed = test.elapsed(time.monotonic())
         if not ok:
@@ -432,7 +432,7 @@ class App:
             self.store.save()
         return new
 
-    # --- Geschichten ------------------------------------------------------
+    # --- Stories ---------------------------------------------------------
     def stories_menu(self):
         level = self.settings["menu"]["stories"]
         index = 0
@@ -463,7 +463,7 @@ class App:
                               "label": "%s (%s) · %s" % (story, label, items[state["shown"]][0])}
         return mode
 
-    # --- Eigene Texte ----------------------------------------------------
+    # --- Own texts ------------------------------------------------------
     def custom_texts(self):
         index = 0
         while True:
@@ -574,7 +574,7 @@ def main(argv=None):
                                      description="KeyFlow – a typing trainer for the terminal. "
                                                  "Made by YnsLaf")
     parser.add_argument("--data", "--daten", dest="data", metavar="FILE",
-                        help="use a different data file (default: ~/.keyflow/daten.json)")
+                        help="use a different data file (default: ~/.keyflow/data.json)")
     parser.add_argument("--version", action="version", version="KeyFlow %s" % __version__)
     args = parser.parse_args(argv)
 

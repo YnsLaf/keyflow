@@ -1,4 +1,4 @@
-"""Erzeugt Übungstexte: Wörter, Sätze, Zahlen, Sonderzeichen, Zitate …"""
+"""Generates practice texts: words, sentences, numbers, symbols, quotes …"""
 
 import random
 
@@ -8,7 +8,7 @@ _UMLAUTS = str.maketrans({
     "ä": "ae", "ö": "oe", "ü": "ue", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue", "ß": "ss",
 })
 
-# Typografische Zeichen, die auf normalen Tastaturen schwer zu tippen sind.
+# typographic characters that are hard to type on normal keyboards
 _TYPO = {
     "„": '"', "“": '"', "”": '"', "‚": "'", "‘": "'", "’": "'", "«": '"',
     "»": '"', "‹": "'", "›": "'", "–": "-", "—": "-", "…": "...",
@@ -21,8 +21,8 @@ def replace_umlauts(text):
 
 
 def normalize_text(text):
-    """Macht einen eingefügten Text tippbar: ein Leerzeichen zwischen Wörtern,
-    keine typografischen Anführungszeichen, keine Steuerzeichen."""
+    """Makes a pasted text typeable: one space between words,
+    no typographic quotes, no control characters."""
     for src, dst in _TYPO.items():
         text = text.replace(src, dst)
     text = "".join(ch if ch.isprintable() else " " for ch in text)
@@ -30,7 +30,7 @@ def normalize_text(text):
 
 
 def finalize(text, settings):
-    """Wendet Einstellungen an, die für jeden erzeugten Text gelten."""
+    """Applies settings that apply to every generated text."""
     if not settings.get("umlauts", True):
         text = replace_umlauts(text)
     return text
@@ -56,8 +56,8 @@ def _join(*parts):
 
 
 class Source:
-    """Liefert Text-Bausteine ("Tokens"). Für feste Tests wird eine bestimmte
-    Anzahl geholt, für Zeit- und freie Tests immer neue Stücke (chunk)."""
+    """Delivers pieces of text ("tokens"). Fixed tests take a set number,
+    time and free tests keep asking for new chunks."""
 
     chunk_size = 10
 
@@ -279,7 +279,7 @@ class SymbolSource(Source):
 
 
 class MixedSource(Source):
-    """Wörter mit Satzzeichen, Großbuchstaben, Zahlen und Sonderzeichen."""
+    """Words with punctuation, capitals, numbers and symbols."""
 
     chunk_size = 10
 
@@ -302,7 +302,7 @@ class MixedSource(Source):
 
 
 class EndlessSource(Source):
-    """Text für den Unendlich-Modus: wird mit jedem Level schwieriger."""
+    """Text for endless mode: gets harder with every level."""
 
     chunk_size = 4
 
@@ -325,7 +325,7 @@ class EndlessSource(Source):
 
 
 class WeakSource(Source):
-    """Bevorzugt Wörter, die deine schwächsten Tasten enthalten."""
+    """Prefers words that contain your weakest keys."""
 
     def __init__(self, lang="de", weak_chars=(), rng=None):
         super().__init__(rng)
@@ -375,8 +375,8 @@ CUSTOM_CHUNK = 400
 
 
 def custom_chunk(text, pos, size=CUSTOM_CHUNK):
-    """Teilt lange eigene Texte in Abschnitte. Gibt (start, ende) zurück;
-    kurze Texte werden immer vollständig geübt."""
+    """Splits long own texts into parts. Returns (start, end);
+    short texts are always practiced in full."""
     if len(text) <= size * 1.5:
         return 0, len(text)
     if pos >= len(text) or pos < 0:

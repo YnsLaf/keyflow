@@ -1,4 +1,4 @@
-"""Speichert Einstellungen, Verlauf, Tastenstatistik und eigene Texte als JSON."""
+"""Stores settings, history, key stats and own texts as JSON."""
 
 import copy
 import json
@@ -26,7 +26,7 @@ SETTING_OPTIONS = {
     "animations": [True, False],
     "keyboard": [True, False],
     "check_updates": [True, False],
-    "command_setup": ["pending", "done"],   # intern: Befehl keyflow eingerichtet?
+    "command_setup": ["pending", "done"],   # internal: keyflow command set up yet?
     "daily_goal": [5, 10, 15, 20, 30, 45, 60],
 }
 
@@ -87,27 +87,42 @@ MENU_DEFAULTS = {
 }
 
 
-# 2: Standard-Hintergrund ist jetzt "glas"
+# 2: default background is now "glas"
 DATA_VERSION = 2
+
+
+DATA_FILE = "data.json"
+OLD_DATA_FILE = "daten.json"   # name used up to version 1.4.3
+
+
+def _data_file(folder):
+    """data.json inside folder; an old daten.json is renamed once."""
+    new, old = folder / DATA_FILE, folder / OLD_DATA_FILE
+    if not new.exists() and old.exists():
+        try:
+            os.replace(old, new)
+        except OSError:
+            return old
+    return new
 
 
 def default_path():
     base = os.environ.get("KEYFLOW_HOME") or os.environ.get("TIPPTRAINER_HOME")
     if base:
-        return Path(base) / "daten.json"
+        return _data_file(Path(base))
     folder = Path.home() / ".keyflow"
     old = Path.home() / ".tipptrainer"
-    # Daten aus der Zeit vor der Umbenennung übernehmen
+    # take over data from before the rename
     if not folder.exists() and old.is_dir():
         try:
             os.rename(old, folder)
         except OSError:
-            return old / "daten.json"
-    return folder / "daten.json"
+            return _data_file(old)
+    return _data_file(folder)
 
 
 def _valid(value, options):
-    # bool ist in Python eine Unterklasse von int – deshalb den Typ mitprüfen.
+    # bool is a subclass of int in Python – so check the type as well
     return any(value == o and type(value) is type(o) for o in options)
 
 
@@ -120,8 +135,8 @@ class Store:
         self.key_stats = {}
         self.custom_texts = []
         self.achievements = {}
-        self.load_error = None       # (Datei, Fehler, Sicherungsdatei)
-        self.needs_language = True   # beim ersten Start nach der Sprache fragen
+        self.load_error = None       # (file, error, backup file)
+        self.needs_language = True   # ask for the language on first start
         self.load()
 
     def load(self):
@@ -132,7 +147,7 @@ class Store:
             if not isinstance(data, dict):
                 raise ValueError("kein JSON-Objekt")
         except (OSError, ValueError) as exc:
-            backup = self.path.with_name(self.path.stem + ".defekt.json")
+            backup = self.path.with_name(self.path.stem + ".broken.json")
             try:
                 os.replace(self.path, backup)
             except OSError:
@@ -143,7 +158,7 @@ class Store:
         if _valid(stored.get("ui_language"), SETTING_OPTIONS["ui_language"]):
             self.needs_language = False
         elif _valid(stored.get("language"), SETTING_OPTIONS["language"]):
-            # ältere Datei ohne Oberflächensprache: bisherige Textsprache vorschlagen
+            # older file without interface language: use the text language
             self.settings["ui_language"] = stored["language"]
         if not _valid(stored.get("kb_layout"), SETTING_OPTIONS["kb_layout"]) and \
                 _valid(stored.get("language"), SETTING_OPTIONS["language"]):

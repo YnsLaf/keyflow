@@ -1,1 +1,2 @@
+# KeyFlow's only runtime dependency (colors on Windows)
 colorama>=0.4.6

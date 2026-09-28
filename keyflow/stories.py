@@ -1,9 +1,10 @@
-"""40 kurze Geschichten zum Abtippen – je 10 einfache, mittlere, schwere und extreme.
+"""40 short stories to type – 10 easy, 10 medium, 10 hard and 10 extreme (German).
 
-Einfach:  kurze Sätze, bekannte Wörter.
-Mittel:   längere Sätze, Kommas, wörtliche Rede.
-Schwer:   verschachtelte Sätze, Zahlen, Semikolons, Anführungszeichen.
-Extrem:   lange Texte voller Zahlen, Einheiten, Klammern, Sonderzeichen und Fachwörter.
+Easy:     short sentences, common words.
+Medium:   longer sentences, commas, direct speech.
+Hard:     nested sentences, numbers, semicolons, quotation marks.
+Extreme:  long texts full of numbers, units, brackets, symbols and jargon.
+The English versions live in stories_en.py.
 """
 
 from .i18n import pick
@@ -18,7 +19,7 @@ def level_label(level):
 
 
 def stories_for(lang, level):
-    """Die Geschichten einer Stufe in der Textsprache (de oder en)."""
+    """The stories of one level in the text language (de or en)."""
     if lang == "en":
         from .stories_en import STORIES_EN
         return STORIES_EN[level]

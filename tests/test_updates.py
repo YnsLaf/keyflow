@@ -11,7 +11,7 @@ class UpdatesTest(unittest.TestCase):
         self.assertFalse(updates.is_newer("1.3.9", "1.4.0"))
 
     def test_source_checkout_is_detected(self):
-        # Die Tests laufen im Quellcode-Ordner (mit start.py)
+        # the tests run inside the source folder (with start.py)
         self.assertEqual(updates.install_method(), "source")
         self.assertEqual(updates.update_command_text(), "git pull")
 

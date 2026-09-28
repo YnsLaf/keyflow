@@ -1,4 +1,4 @@
-"""Alle Bildschirme: Hauptmenü, Test, Ergebnis, Statistik, Kalender, Erfolge …"""
+"""All screens: main menu, test, result, stats, calendar, achievements …"""
 
 import platform
 import sys
@@ -44,10 +44,10 @@ def words_label(n):
     return tr("%d Wörter", "%d words") % n
 
 
-# --- Hauptmenü ---------------------------------------------------------------
+# --- Main menu ---------------------------------------------------------------
 
 def main_items():
-    """(Schlüssel, Name, Format für den Wert, Hinweis) aller Übungsmodi."""
+    """(key, name, value format, hint) of all practice modes."""
     return (
         ("time", tr("Zeit-Test", "Time test"), lambda v: "%d s" % v,
          tr("So viele Wörter wie möglich, bis die Zeit abläuft.",
@@ -154,7 +154,7 @@ def quick_label(store):
     return "%s · %s" % (label, text)
 
 
-# --- Maskottchen ----------------------------------------------------------------
+# --- Mascot --------------------------------------------------------------------
 
 def mascot_messages(store, updater=None):
     if updater is not None and updater.available:
@@ -203,7 +203,7 @@ def _wrap_words(text, width):
 
 
 def mascot(store, messages):
-    """Flow, das KeyFlow-Maskottchen: blinzelt, wippt und gibt Tipps."""
+    """Flow, the KeyFlow mascot: blinks, bobs and gives tips."""
     t = ui.clock()
     body = ui.fg(ui.hsv(0.5 + t * 0.08, 0.45, 0.95))
     eye_col = TEXT + BRIGHT
@@ -233,7 +233,7 @@ def mascot(store, messages):
         [DIM + "    Flow" + RESET]
 
 
-# --- Hauptmenü --------------------------------------------------------------
+# --- Main menu --------------------------------------------------------------
 
 def main_menu(term, store, index=0, updater=None):
     items = [Item(tr("Weiter: ", "Continue: ") + quick_label(store), action="quick",
@@ -316,10 +316,10 @@ def category_menu(term, store, category, index=0):
     return action, index
 
 
-# --- Test-Ansicht -------------------------------------------------------------
+# --- Test view ---------------------------------------------------------------
 
 KEY_IDLE_FG = (110, 116, 128)
-KEY_HOME_FG = (170, 176, 188)   # F und J (Grundstellung)
+KEY_HOME_FG = (170, 176, 188)   # F and J (home row)
 KEY_SPACE_FG = (70, 74, 84)
 KEY_GLOW_A = (80, 220, 255)
 KEY_GLOW_B = (170, 120, 255)
@@ -327,7 +327,7 @@ KEY_ERROR = (235, 70, 80)
 
 
 def live_keyboard(lang, next_char, flash=None):
-    """Tastatur mit leuchtender nächster Taste. flash = falsch gedrückte Taste."""
+    """Keyboard with the next key lit up. flash = wrongly pressed key."""
     glow_keys, hint = keyboard.keys_for(next_char, lang)
     error_key = keyboard.base_key(flash, lang) if flash else None
     glow = ui.mix(KEY_GLOW_A, KEY_GLOW_B, ui.pulse(4.0))
@@ -363,7 +363,7 @@ def _char_style(test, i, cursor, word_end):
     if i == test.pos:
         return cursor
     if i < word_end:
-        return TEXT + BRIGHT   # das aktuelle Wort leuchtet
+        return TEXT + BRIGHT   # the current word glows
     return DIM
 
 
@@ -397,7 +397,7 @@ def draw_test(term, test, now, mode, settings, note="", flash=None):
     while len(text_lines) < visible:
         text_lines.append("")
 
-    # Kopfzeile mit Zeit und Werten
+    # header line with time and stats
     elapsed = test.elapsed(now)
     state = getattr(mode, "state", None)
     progress = None
@@ -443,7 +443,7 @@ def draw_test(term, test, now, mode, settings, note="", flash=None):
     else:
         footer = tr("Tab neu starten · Esc Menü", "Tab restart · Esc menu")
 
-    if progress is None:  # freier Modus: Linie fließt einfach
+    if progress is None:  # free mode: the line just keeps flowing
         line = ui.flow_line(width, 1.0, speed=0.15)
     else:
         line = ui.flow_line(width, progress)
@@ -455,7 +455,7 @@ def draw_test(term, test, now, mode, settings, note="", flash=None):
     if settings.get("keyboard", True) and rows >= 20:
         next_char = test.target[test.pos] if test.pos < len(test.target) else None
         kb, hint = live_keyboard(settings["kb_layout"], next_char, flash)
-        # Mitte der Grundreihe (A … #) genau unter die Mitte des Textes setzen
+        # put the middle of the home row (A … #) right under the middle of the text
         home = keyboard.layout(settings["kb_layout"])[2]
         home_center = (home[0][0] + home[-1][0] + home[-1][3]) / 2
         text_center = len(margin) + width / 2
@@ -476,7 +476,7 @@ def draw_test(term, test, now, mode, settings, note="", flash=None):
     draw(term, screen)
 
 
-# --- Ergebnis -----------------------------------------------------------------
+# --- Result -------------------------------------------------------------------
 
 def record_text(entry):
     if "score" in entry:
@@ -554,7 +554,7 @@ def result_lines(mode, result, info, store, width):
 
 
 def result_screen(term, mode, result, info, store):
-    """Zeigt das Ergebnis. Gibt "next", "repeat" oder "menu" zurück."""
+    """Shows the result. Returns "next", "repeat" or "menu"."""
     footer = tr("Enter nächster Test", "Enter next test")
     if mode.repeatable:
         footer += tr(" · R gleichen Text wiederholen", " · R repeat same text")
@@ -566,7 +566,7 @@ def result_screen(term, mode, result, info, store):
         lines = title_block(tr("Ergebnis", "Result"), width=width) + result_lines(mode, result, info, store, width)
         draw(term, frame(term, lines, footer))
         key = term.read_key(ui.tick())
-        # Kurze Sperre, damit nachträgliche Tastendrücke nichts auslösen.
+        # short lock so late keystrokes do not trigger anything
         if key is None or time.monotonic() - shown_at < 0.6:
             continue
         if key in (T.ENTER, T.TAB, "n"):
@@ -577,7 +577,7 @@ def result_screen(term, mode, result, info, store):
             return "menu"
 
 
-# --- Statistik ----------------------------------------------------------------
+# --- Stats --------------------------------------------------------------------
 
 def overview_lines(store, width):
     history = store.history
@@ -771,7 +771,7 @@ def stats_screen(term, store):
     tab_screen(term, tr("Statistik & Rekorde", "Stats & records"), tabs)
 
 
-# --- Aktivitätskalender -------------------------------------------------------
+# --- Activity calendar -------------------------------------------------------
 
 def activity_lines(store, width, offset_weeks=0, today=None):
     today = today or date.today()
@@ -862,7 +862,7 @@ def activity_screen(term, store):
             return
 
 
-# --- Erfolge ------------------------------------------------------------------
+# --- Achievements---------------------------------------------------------------
 
 def achievements_screen(term, store):
     scroll = 0
@@ -901,10 +901,10 @@ def achievements_screen(term, store):
             return
 
 
-# --- Einstellungen ------------------------------------------------------------
+# --- Settings ----------------------------------------------------------------
 
 def settings_ui():
-    """(Schlüssel, Name, Anzeige des Werts, Hinweis); None = Abstand."""
+    """(key, name, value display, hint); None = gap."""
     return (
         ("ui_language", tr("Sprache", "Language"), {"en": "English", "de": "Deutsch"},
          tr("Sprache von KeyFlow und der Übungstexte.", "Language of KeyFlow and of the practice texts.")),
@@ -1025,7 +1025,7 @@ def settings_screen(term, store, on_look_change=None, on_language_change=None):
         return
 
 
-# --- Geschichten ----------------------------------------------------------------
+# --- Stories -------------------------------------------------------------------
 
 def stories_menu(term, store, level, index=0):
     best = {}
@@ -1055,7 +1055,7 @@ def stories_menu(term, store, level, index=0):
                     width=width)
 
 
-# --- Eigene Texte -------------------------------------------------------------
+# --- Own texts ---------------------------------------------------------------
 
 def custom_menu(term, store, index=0):
     items = []
@@ -1086,10 +1086,10 @@ def custom_menu(term, store, index=0):
                     extra_keys=(T.DELETE, "d", "D"), width=width)
 
 
-# --- Sprache beim ersten Start -------------------------------------------------
+# --- Language on first start -----------------------------------------------
 
 def language_picker(term):
-    """Fragt beim allerersten Start nach der Sprache. Gibt "en" oder "de" zurück."""
+    """Asks for the language on the very first start. Returns "en" or "de"."""
     items = [Item("English", action="en", hint="KeyFlow will be in English."),
              Item("Deutsch", action="de", hint="KeyFlow wird auf Deutsch sein.")]
     width = content_width(term)
@@ -1160,7 +1160,7 @@ def info_header(store, updater, width):
 
 
 def info_screen(term, store, updater, index=0):
-    """Gibt die gewählte Aktion zurück: github, repo, pypi, update, check oder None."""
+    """Returns the chosen action: github, repo, pypi, update, check or None."""
     width = content_width(term)
     available = updater is not None and updater.available
     items = [

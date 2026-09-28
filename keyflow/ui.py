@@ -1,4 +1,4 @@
-"""Farben, Layout-Helfer und wiederverwendbare Bausteine wie das Menü."""
+"""Colors, layout helpers and reusable building blocks such as the menu."""
 
 import colorsys
 import math
@@ -22,17 +22,17 @@ GOLD = Style.BRIGHT + Fore.YELLOW
 UNDERLINE = "\x1b[4m"
 REVERSE = "\x1b[7m"
 
-# Farbcodes (CSI) und anklickbare Links (OSC 8) zählen nicht zur sichtbaren Breite.
+# color codes (CSI) and clickable links (OSC 8) do not count towards the visible width
 _ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]|\x1b\]8;[^\x1b\x07]*(?:\x1b\\|\x07)")
 
-# Aktueller Farbmodus und ob sich Farben bewegen (wird aus den Einstellungen gesetzt).
+# current color mode and whether colors move (set from the settings)
 STYLE = {"color": "256", "animate": True}
 
-# Hintergründe, die KeyFlow beim Start ins Terminal setzt: (Name, RGB, Deckkraft).
-# Deckkraft None = die Deckkraft des Terminal-Profils bleibt, wie sie ist.
-# "glas": Farbton 0°, Sättigung 0 %, Helligkeit 10 %, Deckkraft 30 %.
+# backgrounds KeyFlow sets in the terminal on start: (name, RGB, opacity)
+# opacity None = the terminal profile keeps its own opacity
+# "glas": hue 0°, saturation 0 %, brightness 10 %, opacity from the settings
 BACKGROUNDS = {
-    "glas": (("Glas (YnsLaf)", "Glass (YnsLaf)"), (26, 26, 26), 0.70),   # Deckkraft: Einstellung
+    "glas": (("Glas (YnsLaf)", "Glass (YnsLaf)"), (26, 26, 26), 0.70),   # opacity: see settings
     "mitternacht": (("Mitternacht", "Midnight"), (13, 17, 23), None),
     "graphit": (("Graphit", "Graphite"), (24, 24, 27), None),
     "ozean": (("Ozean", "Ocean"), (8, 24, 38), None),
@@ -49,12 +49,12 @@ def configure(settings):
 
 
 def tick():
-    """Wie lange auf eine Taste gewartet wird, bevor neu gezeichnet wird."""
+    """How long to wait for a key before redrawing."""
     return 0.08 if STYLE["animate"] else 0.5
 
 
 def clock():
-    """Zeit für Animationen; ohne Animationen bleibt sie stehen."""
+    """Time for animations; stands still when animations are off."""
     return time.monotonic() if STYLE["animate"] else 0.0
 
 
@@ -66,7 +66,7 @@ def _cube_index(v):
 
 
 def rgb_to_256(rgb):
-    """Nächstliegende Farbe der 256er-Palette (Farbwürfel oder Graustufe)."""
+    """Closest color of the 256-color palette (color cube or gray ramp)."""
     r, g, b = rgb
     ci = (_cube_index(r), _cube_index(g), _cube_index(b))
     cube = tuple(_CUBE[i] for i in ci)
@@ -122,12 +122,12 @@ def mix(a, b, f):
 
 
 def pulse(speed=3.0):
-    """Wert zwischen 0 und 1, der langsam hin und her schwingt."""
+    """Value between 0 and 1 that slowly swings back and forth."""
     return (math.sin(clock() * speed) + 1) / 2
 
 
 def gradient(text, speed=0.12, spread=0.035, base=0.5, s=0.55, v=1.0, bold=True):
-    """Text mit fließendem Farbverlauf."""
+    """Text with a flowing color gradient."""
     t = clock()
     out = [BRIGHT] if bold else []
     for i, ch in enumerate(text):
@@ -139,7 +139,7 @@ def gradient(text, speed=0.12, spread=0.035, base=0.5, s=0.55, v=1.0, bold=True)
 
 
 def flow_line(width, fraction, speed=0.25):
-    """Fortschrittslinie, deren gefüllter Teil in bewegten Farben fließt."""
+    """Progress line whose filled part flows in moving colors."""
     fraction = max(0.0, min(1.0, fraction))
     full = int(round(width * fraction))
     t = clock()
@@ -147,11 +147,11 @@ def flow_line(width, fraction, speed=0.25):
     return "".join(parts) + fg((60, 64, 72)) + "─" * (width - full) + RESET
 
 
-SOFT = "\x1b[38;5;250m"   # ruhiges Grau für nicht ausgewählte Einträge
+SOFT = "\x1b[38;5;250m"   # calm gray for unselected entries
 
 
 def link(url, text=None):
-    """Anklickbarer Link (in Terminals, die das können; sonst normaler Text)."""
+    """Clickable link (in terminals that support it; plain text otherwise)."""
     return "\x1b]8;;%s\x1b\\%s\x1b]8;;\x1b\\" % (url, text or url)
 
 
@@ -160,7 +160,7 @@ def strip_ansi(text):
 
 
 def vlen(text):
-    """Sichtbare Länge (ohne Farbcodes)."""
+    """Visible length (without color codes)."""
     return len(strip_ansi(text))
 
 
@@ -169,7 +169,7 @@ def pad(text, width):
 
 
 def clip(text, width):
-    """Kürzt auf width sichtbare Zeichen, Farbcodes bleiben erhalten."""
+    """Cuts to width visible characters, keeping the color codes."""
     out, visible, i = [], 0, 0
     while i < len(text):
         m = _ANSI.match(text, i)
@@ -185,7 +185,7 @@ def clip(text, width):
 
 
 def fmt_num(value, digits=0):
-    """Zahl im Format der Sprache: 12.345,6 (de) bzw. 12,345.6 (en)"""
+    """Number in the language's format: 12.345,6 (de) or 12,345.6 (en)"""
     text = "{:,.{}f}".format(value, digits)
     if language() != "de":
         return text
@@ -193,7 +193,7 @@ def fmt_num(value, digits=0):
 
 
 def short_path(path):
-    """Pfad mit ~ statt Home-Ordner – so steht der Benutzername nicht auf Screenshots."""
+    """Path with ~ instead of the home folder – keeps the user name off screenshots."""
     import os
     text, home = str(path), os.path.expanduser("~")
     return "~" + text[len(home):] if home and text.startswith(home) else text
@@ -244,7 +244,7 @@ _SPARK = "▁▂▃▄▅▆▇█"
 def sparkline(values, width=None):
     values = list(values)
     if width and len(values) > width:
-        # auf width Werte zusammenfassen
+        # squeeze down to width values
         step = len(values) / width
         values = [sum(values[int(i * step):int((i + 1) * step)] or [0])
                   / max(1, len(values[int(i * step):int((i + 1) * step)]))
@@ -256,8 +256,8 @@ def sparkline(values, width=None):
 
 
 def bar_chart(values, height):
-    """Senkrechte Balken, eine Spalte pro Wert. Die y-Achse beginnt knapp
-    unter dem kleinsten Wert, damit Unterschiede sichtbar werden."""
+    """Vertical bars, one column per value. The y axis starts just below the
+    smallest value so differences stay visible."""
     if not values:
         return []
     top = max(values)
@@ -284,7 +284,7 @@ def bar_chart(values, height):
     return lines
 
 
-# --- Kalender-Farben (GitHub-Grün) -------------------------------------------
+# --- Calendar colors (GitHub green) -----------------------------------------
 
 _HEAT_TRUE = ((52, 58, 66), (14, 68, 41), (0, 109, 50), (38, 166, 65), (57, 211, 83))
 _HEAT_256 = (237, 22, 28, 34, 46)
@@ -316,7 +316,7 @@ def heat_level(seconds, goal_seconds):
     return 4
 
 
-# --- Große Ziffern für das Ergebnis ----------------------------------------
+# --- Big digits for the result -------------------------------------------
 
 _BIG = {
     "0": ("█▀█", "█ █", "▀▀▀"),
@@ -337,10 +337,10 @@ def big_number(value):
     return [" ".join(_BIG[d][row] for d in digits) for row in range(3)]
 
 
-# --- Bildschirm --------------------------------------------------------------
+# --- Screen ----------------------------------------------------------------
 
 def draw(term, lines):
-    """Zeichnet den ganzen Bildschirm neu, ohne zu flackern."""
+    """Redraws the whole screen without flicker."""
     cols, rows = term.size()
     buf = [T.HOME]
     for line in lines[:rows - 1]:
@@ -350,7 +350,7 @@ def draw(term, lines):
 
 
 def frame(term, lines, footer="", width=72):
-    """Zentriert einen Block waagerecht und setzt die Fußzeile nach unten."""
+    """Centers a block and puts the footer at the bottom."""
     cols, rows = term.size()
     w = min(width, cols - 2)
     margin = " " * max(1, (cols - w) // 2)
@@ -402,11 +402,11 @@ REFRESH = "__refresh__"
 
 
 class Item:
-    """Ein Menüeintrag. Mit options wird daraus ein Auswahlfeld (◀ ▶)."""
+    """A menu entry. With options it becomes a selector (◀ ▶)."""
 
     def __init__(self, label="", action=None, options=None, value=None, fmt=None,
                  on_change=None, hint="", right="", separator=False, refresh=False):
-        self.refresh = refresh  # nach einer Änderung Menü neu aufbauen (z. B. Sprache)
+        self.refresh = refresh  # rebuild the menu after a change (e.g. language)
         self.label = label
         self.action = action
         self.options = options
@@ -437,10 +437,10 @@ class Item:
 
 def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72,
              numbered=False, side=None, side_col=34):
-    """Zeigt ein Menü. Gibt (aktion, index, taste) zurück; aktion None = zurück.
+    """Shows a menu. Returns (action, index, key); action None = back.
 
-    numbered: Einträge mit 1–9 direkt wählbar.
-    side:     Funktion, die Zeilen liefert, die rechts neben dem Menü stehen."""
+    numbered: entries can be picked directly with 1–9.
+    side:     function returning lines shown to the right of the menu."""
     selectable = [i for i, it in enumerate(items) if not it.separator]
     if index not in selectable:
         index = selectable[0]
@@ -469,7 +469,7 @@ def run_menu(term, header, items, index=0, footer="", extra_keys=(), width=72,
                 extra = DIM + "  " + it.right
             menu_lines.append(marker + RESET + label + extra + RESET)
         hint = items[index].hint
-        # Wenn das Menü nicht auf den Bildschirm passt, nur einen Ausschnitt zeigen.
+        # if the menu does not fit on the screen, show only a part of it
         room = rows - len(lines) - (4 if hint else 2)
         if len(menu_lines) > room > 3:
             first = min(max(0, index - room // 2), len(menu_lines) - room)

@@ -1,4 +1,4 @@
-"""Bildschirm-Tastatur: zeigt, welche Taste als Nächstes gedrückt werden muss."""
+"""On-screen keyboard: shows which key has to be pressed next."""
 
 import sys
 
@@ -6,13 +6,13 @@ from .i18n import pick, tr
 
 MAC = sys.platform == "darwin"
 
-# Zeichen-Tasten je Reihe (klein geschrieben = Grundbelegung)
+# character keys per row (lowercase = base layer)
 ROWS = {
     "de": ("^1234567890ß´", "qwertzuiopü+", "asdfghjklöä#", "<yxcvbnm,.-"),
     "en": ("`1234567890-=", "qwertyuiop[]\\", "asdfghjkl;'", "zxcvbnm,./"),
 }
 
-# Finger je Taste: L/R = Hand, 2 = Zeige-, 3 = Mittel-, 4 = Ring-, 5 = kleiner Finger
+# finger per key: L/R = hand, 2 = index, 3 = middle, 4 = ring, 5 = pinky
 FINGERS = {
     "de": (
         ("L5", "L5", "L4", "L3", "L2", "L2", "R2", "R2", "R3", "R4", "R5", "R5", "R5"),
@@ -36,13 +36,13 @@ FINGER_NAMES = {
     "T": ("Daumen", "thumb"),
 }
 
-# Umschalt-Zeichen -> Grundtaste
+# shifted character -> base key
 SHIFTED = {
     "de": dict(zip('°!"§$%&/()=?`*\'>;:_', "^1234567890ß´+#<,.-")),
     "en": dict(zip('~!@#$%^&*()_+{}|:"<>?', "`1234567890-=[]\\;',./")),
 }
 
-# Zeichen über AltGr (Windows/Linux) bzw. Wahltaste ⌥ (Mac): Zeichen -> (Taste, mit Umschalt?)
+# characters via AltGr (Windows/Linux) or Option ⌥ (Mac): char -> (key, with shift?)
 ALT = {
     "de": {"@": ("q", False), "€": ("e", False), "{": ("7", False), "[": ("8", False),
            "]": ("9", False), "}": ("0", False), "\\": ("ß", False), "~": ("+", False),
@@ -72,7 +72,7 @@ def finger_of(key, lang):
 
 
 def base_key(ch, lang):
-    """Die Taste (ohne Umschalt/Alt), auf der ein Zeichen liegt, oder None."""
+    """The key (without Shift/Alt) a character lives on, or None."""
     if ch == " ":
         return " "
     low = ch.lower() if len(ch.lower()) == 1 else ch
@@ -87,9 +87,9 @@ def base_key(ch, lang):
 
 
 def keys_for(ch, lang):
-    """Welche Tasten für ein Zeichen leuchten sollen und welcher Finger sie drückt.
+    """Which keys light up for a character and which finger presses them.
 
-    Gibt (menge_der_tasten, hinweistext) zurück. Modifikatoren heißen
+    Returns (set_of_keys, hint). Modifiers are called
     "shift_l", "shift_r", "mod_l", "mod_r"."""
     if ch is None:
         return set(), ""
@@ -127,7 +127,7 @@ def keys_for(ch, lang):
     return keys, hint
 
 
-PITCH = 3  # Abstand von Taste zu Taste in Zeichen
+PITCH = 3  # distance from key to key in characters
 
 
 def _cap(key):
@@ -135,10 +135,10 @@ def _cap(key):
 
 
 def layout(lang):
-    """Tastatur als Reihen von (x, beschriftung, tasten-id, breite).
+    """Keyboard as rows of (x, label, key_id, width).
 
-    Gleichmäßiges Raster mit leichtem Versatz je Reihe wie auf einer echten
-    Tastatur; Umschalt links/rechts, darunter Leertaste mit ⌥ bzw. Alt/AltGr."""
+    Even grid with a slight offset per row like on a real keyboard;
+    Shift left/right, below that the space bar with ⌥ or Alt/AltGr."""
     rows = ROWS[lang]
     offsets = (3, 5, 6, 4) if lang == "de" else (3, 5, 6, 7)
     out = []
@@ -148,7 +148,7 @@ def layout(lang):
             cells.insert(0, (off - 4, "⇧", "shift_l", 3))
             cells.append((off + len(row) * PITCH + 1, "⇧", "shift_r", 3))
         out.append(cells)
-    # Leertaste: von C bis Komma, Modifikatoren links und rechts daneben
+    # space bar: from C to comma, modifiers left and right of it
     bottom = rows[3]
     x_c = offsets[3] + bottom.index("c") * PITCH
     x_comma = offsets[3] + bottom.index(",") * PITCH + PITCH

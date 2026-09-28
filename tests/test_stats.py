@@ -16,7 +16,7 @@ class StreakTest(unittest.TestCase):
     def test_streaks(self):
         days = {date(2026, 9, d): 60 for d in (1, 2, 3, 10, 11, 26, 27)}
         self.assertEqual(stats.streaks(days, date(2026, 9, 27)), (2, 3))
-        # gestern geübt, heute noch nicht: Serie läuft weiter
+        # practiced yesterday, not yet today: streak continues
         self.assertEqual(stats.streaks(days, date(2026, 9, 28)), (2, 3))
         self.assertEqual(stats.streaks(days, date(2026, 9, 29)), (0, 3))
         self.assertEqual(stats.streaks({}, date(2026, 9, 29)), (0, 0))
@@ -63,7 +63,7 @@ class AchievementTest(unittest.TestCase):
 class StoreTest(unittest.TestCase):
     def test_roundtrip_and_validation(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "daten.json"
+            path = Path(tmp) / "data.json"
             store = Store(path)
             store.settings["language"] = "en"
             store.settings["menu"]["time"] = 60
@@ -76,7 +76,7 @@ class StoreTest(unittest.TestCase):
 
     def test_invalid_values_fall_back(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "daten.json"
+            path = Path(tmp) / "data.json"
             path.write_text('{"settings": {"language": "xx", "strict": 1, "daily_goal": 30}}',
                             encoding="utf-8")
             store = Store(path)
@@ -86,19 +86,32 @@ class StoreTest(unittest.TestCase):
 
     def test_old_files_get_new_default_background(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "daten.json"
+            path = Path(tmp) / "data.json"
             path.write_text('{"version": 1, "settings": {"background": "mitternacht"}}', encoding="utf-8")
             self.assertEqual(Store(path).settings["background"], "glas")
             path.write_text('{"version": 2, "settings": {"background": "ozean"}}', encoding="utf-8")
             self.assertEqual(Store(path).settings["background"], "ozean")
 
+    def test_old_data_file_is_renamed(self):
+        import os
+        from keyflow import storage
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "daten.json").write_text('{"history": []}', encoding="utf-8")
+            os.environ["KEYFLOW_HOME"] = tmp
+            try:
+                self.assertEqual(storage.default_path().name, "data.json")
+            finally:
+                del os.environ["KEYFLOW_HOME"]
+            self.assertTrue((Path(tmp) / "data.json").exists())
+            self.assertFalse((Path(tmp) / "daten.json").exists())
+
     def test_broken_file_is_moved_away(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "daten.json"
+            path = Path(tmp) / "data.json"
             path.write_text("{kaputt", encoding="utf-8")
             store = Store(path)
             self.assertIsNotNone(store.load_error)
-            self.assertTrue((Path(tmp) / "daten.defekt.json").exists())
+            self.assertTrue((Path(tmp) / "data.broken.json").exists())
             self.assertEqual(store.history, [])
 
 
