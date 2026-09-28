@@ -1,7 +1,9 @@
 """Tastatur-Eingabe und Bildschirmsteuerung für Windows, Linux und macOS."""
 
 import os
+import re
 import shutil
+import subprocess
 import sys
 import time
 from contextlib import contextmanager
@@ -64,6 +66,8 @@ class Terminal:
         self.fd = None
         self._saved = None
         self._erase = b"\x7f"
+        self._apple_original = None   # ursprüngliche Hintergrundfarbe (Terminal.app)
+        self._osc_background = False
 
     def __enter__(self):
         fix = getattr(colorama, "just_fix_windows_console", None)
@@ -86,6 +90,7 @@ class Terminal:
         return self
 
     def __exit__(self, *exc):
+        self.restore_background()
         self.write(colorama.Style.RESET_ALL + SHOW_CURSOR + ALT_SCREEN_OFF + WIPE)
         if self._saved is not None:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self._saved)
@@ -99,6 +104,59 @@ class Terminal:
     def size(self):
         size = shutil.get_terminal_size((80, 24))
         return max(20, size.columns), max(8, size.lines)
+
+    # --- Hintergrundfarbe des Terminals ---------------------------------
+    def _apple_terminal(self):
+        return sys.platform == "darwin" and os.environ.get("TERM_PROGRAM") == "Apple_Terminal"
+
+    def _apple_script(self, action):
+        """Führt AppleScript für genau diesen Terminal-Tab aus (erkannt am tty)."""
+        try:
+            tty_name = os.ttyname(sys.stdin.fileno())
+        except OSError:
+            return None
+        script = (
+            'tell application "Terminal"\n'
+            '  repeat with w in windows\n'
+            '    repeat with t in tabs of w\n'
+            '      if tty of t is "%s" then %s\n'
+            '    end repeat\n'
+            '  end repeat\n'
+            'end tell' % (tty_name, action))
+        try:
+            done = subprocess.run(["osascript", "-e", script], capture_output=True,
+                                  text=True, timeout=4)
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return done.stdout if done.returncode == 0 else None
+
+    def set_background(self, rgb):
+        """Setzt die Hintergrundfarbe; None stellt die ursprüngliche wieder her."""
+        if rgb is None:
+            self.restore_background()
+            return
+        if self._apple_terminal():
+            if self._apple_original is None:
+                out = self._apple_script("return background color of t") or ""
+                self._apple_original = [int(n) for n in re.findall(r"-?\d+", out)]
+            if len(self._apple_original) < 3:
+                return  # Farbe ließ sich nicht auslesen – dann lieber nichts ändern
+            color = [c * 257 for c in rgb]
+            if len(self._apple_original) == 4:  # Deckkraft des Nutzers behalten
+                color.append(self._apple_original[3])
+            self._apple_script("set background color of t to {%s}" % ", ".join(map(str, color)))
+        else:
+            self.write("\x1b]11;#%02x%02x%02x\x1b\\" % tuple(rgb))
+            self._osc_background = True
+
+    def restore_background(self):
+        if self._apple_original:
+            self._apple_script("set background color of t to {%s}"
+                               % ", ".join(map(str, self._apple_original)))
+            self._apple_original = None
+        if self._osc_background:
+            self.write("\x1b]111\x1b\\")
+            self._osc_background = False
 
     def bell(self):
         self.write("\a")

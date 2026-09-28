@@ -19,6 +19,9 @@ SETTING_OPTIONS = {
     "text_width": [50, 60, 70, 80, 100],
     "bell": [False, True],
     "color_mode": ["256", "truecolor", "basic"],
+    "background": ["mitternacht", "graphit", "ozean", "wald", "aubergine", "schwarz", "aus"],
+    "animations": [True, False],
+    "keyboard": [True, False],
     "daily_goal": [5, 10, 15, 20, 30, 45, 60],
 }
 
@@ -36,6 +39,9 @@ DEFAULT_SETTINGS = {
     "text_width": 70,
     "bell": False,
     "color_mode": "256",
+    "background": "mitternacht",
+    "animations": True,
+    "keyboard": True,
     "daily_goal": 15,
 }
 
