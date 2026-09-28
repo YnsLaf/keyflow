@@ -1,3 +1,3 @@
-"""Keyflow – Tipptrainer fürs Terminal. Made by yns.laf"""
+"""KeyFlow – Tipptrainer fürs Terminal. Made by yns.laf"""
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"

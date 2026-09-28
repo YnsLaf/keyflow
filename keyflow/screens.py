@@ -83,7 +83,131 @@ def main_header(store, width):
     return [first, second, DIM + "─" * width + RESET]
 
 
+MODE_INFO = {key: (label, fmt, hint) for key, label, fmt, hint in MAIN_ITEMS}
+
+CATEGORIES = (
+    ("practice", "Tippen üben", "Zeit-Test, Wörter-Test, Freier Modus und Unendlich-Modus.",
+     ("time", "words", "free", "endless")),
+    ("texts", "Texte & Geschichten", "Geschichten, Sätze, Zitate und eigene Texte.",
+     ("stories", "sentences", "quotes", "custom")),
+    ("special", "Zahlen & Zeichen", "Zahlen, Sonderzeichen, Gemischt und Schwächen-Training.",
+     ("numbers", "symbols", "mixed", "weak")),
+    ("progress", "Fortschritt", "Statistik & Rekorde, Aktivitätskalender und Erfolge.",
+     ("stats", "activity", "achievements")),
+)
+CATEGORY_LABELS = {key: label for key, label, _, _ in CATEGORIES}
+
+
+def quick_label(store):
+    last = store.settings["menu"]["last"]
+    label, fmt, _ = MODE_INFO[last]
+    value = store.settings["menu"][last]
+    text = fmt.get(value, str(value)) if isinstance(fmt, dict) else fmt(value)
+    return "%s · %s" % (label, text)
+
+
+# --- Maskottchen ----------------------------------------------------------------
+
+def mascot_messages(store):
+    today = date.today()
+    days = stats.daily_seconds(store.history)
+    current, _ = stats.streaks(days, today)
+    goal = store.settings["daily_goal"] * 60
+    done = days.get(today, 0)
+    best = stats.best_entry(store.history)
+    if not store.history:
+        return ["Hi, ich bin Flo! Drück Enter und leg los.",
+                "Tipp: Die Zeigefinger ruhen auf F und J."]
+    msgs = []
+    if done >= goal:
+        msgs.append("Tagesziel geschafft – stark!")
+    elif done > 0:
+        msgs.append("Noch %d min bis zum Tagesziel." % max(1, round((goal - done) / 60)))
+    else:
+        msgs.append("Heute noch nicht geübt. Eine Runde?")
+    if current >= 2:
+        msgs.append("%d Tage in Folge – weiter so!" % current)
+    if best:
+        msgs.append("Dein Rekord: %d WPM. Knackst du ihn?" % round(best["wpm"]))
+    msgs += ["Tipp: Schau auf den Text, nicht auf die Tasten.",
+             "Tipp: Erst genau, dann schnell.",
+             "Tipp: Die Zeigefinger ruhen auf F und J."]
+    return msgs
+
+
+def _wrap_words(text, width):
+    lines, line = [], ""
+    for word in text.split():
+        if line and len(line) + 1 + len(word) > width:
+            lines.append(line)
+            line = word
+        else:
+            line = (line + " " + word).strip()
+    return lines + [line] if line else lines
+
+
+def mascot(store, messages):
+    """Flo, das KeyFlow-Maskottchen: blinzelt, wippt und gibt Tipps."""
+    t = ui.clock()
+    body = ui.fg(ui.hsv(0.5 + t * 0.08, 0.45, 0.95))
+    eye_col = TEXT + BRIGHT
+    blink = (t % 4.0) < 0.18
+    eye = "–" if blink else "◕"
+    done_today = stats.daily_seconds(store.history).get(date.today(), 0) > 0
+    mouth = "◡" if done_today else "‿"
+    msg = messages[int(t / 5) % len(messages)] if t else messages[0]
+
+    width = 24
+    text_lines = _wrap_words(msg, width)[:3]
+    bubble = [DIM + "╭" + "─" * (width + 2) + "╮" + RESET]
+    for line in text_lines:
+        bubble.append(DIM + "│ " + RESET + TEXT + line.ljust(width) + RESET + DIM + " │" + RESET)
+    bubble.append(DIM + "╰──┬" + "─" * (width - 1) + "╯" + RESET)
+    bubble.append(DIM + "   ╵" + RESET)
+
+    bob = int(t * 1.5) % 2 if t else 0
+    figure = [
+        body + "  ╭───────╮" + RESET,
+        body + "  │ " + eye_col + eye + "   " + eye + body + " │" + RESET,
+        body + "  │   " + eye_col + mouth + body + "   │" + RESET,
+        body + "  ╰─┬───┬─╯" + RESET,
+        body + "    ╵   ╵" + RESET,
+    ]
+    return bubble + ([""] if bob else []) + figure + ([] if bob else [""]) + \
+        [DIM + "     Flo" + RESET]
+
+
+# --- Hauptmenü --------------------------------------------------------------
+
 def main_menu(term, store, index=0):
+    items = [Item("Weiter: " + quick_label(store), action="quick",
+                  hint="Startet sofort deinen zuletzt gespielten Modus.")]
+    for key, label, hint, _ in CATEGORIES:
+        items.append(Item(label, action=key, hint=hint))
+    items += [
+        Item("Einstellungen", action="settings",
+             hint="Sprache, Satzzeichen, Hintergrund, Tastatur, Tagesziel …"),
+        Item("Beenden", action="quit", hint="Bis bald!"),
+    ]
+    width = content_width(term)
+    cache = {}
+    messages = mascot_messages(store)
+
+    def header():
+        w = content_width(term)
+        if cache.get("width") != w:
+            cache["width"], cache["lines"] = w, main_header(store, w)
+        lines = list(cache["lines"])
+        lines[0] = lines[0].replace(TITLE, ui.gradient(TITLE), 1)
+        return lines + [""]
+
+    action, index, _ = run_menu(
+        term, header, items, index, numbered=True, side=lambda: mascot(store, messages),
+        side_col=40, footer="↑↓ wählen · Enter öffnen · 1–7 direkt · Esc beenden", width=width)
+    return action, index
+
+
+def category_menu(term, store, category, index=0):
     menu = store.settings["menu"]
 
     def setter(key):
@@ -93,45 +217,41 @@ def main_menu(term, store, index=0):
         return change
 
     items = []
-    for key, label, fmt, hint in MAIN_ITEMS:
-        items.append(Item(label, action=key, options=storage.MENU_OPTIONS[key],
-                          value=menu[key], fmt=fmt, on_change=setter(key), hint=hint))
-    unlocked = len(store.achievements)
-    items += [
-        Item("Eigener Text", action="custom", right="%d gespeichert" % len(store.custom_texts),
-             hint="Eigene Texte einfügen oder aus einer Datei laden."),
-        Item("Statistik & Rekorde", action="stats",
-             hint="Bestwerte, Verlauf, Durchschnitt und deine schwächsten Tasten."),
-        Item("Aktivität", action="activity",
-             hint="Kalender deiner Übungstage – wie auf GitHub."),
-        Item("Erfolge", action="achievements",
-             right="%d/%d" % (unlocked, len(stats.ACHIEVEMENTS)),
-             hint="Abzeichen für Tempo, Genauigkeit und Ausdauer."),
-        Item("Einstellungen", action="settings",
-             hint="Sprache, Satzzeichen, Zahlen, Fehlermodus, Tagesziel …"),
-        Item("Beenden", action="quit"),
-    ]
+    keys = dict((c[0], c[3]) for c in CATEGORIES)[category]
+    for key in keys:
+        if key in MODE_INFO:
+            label, fmt, hint = MODE_INFO[key]
+            items.append(Item(label, action=key, options=storage.MENU_OPTIONS[key],
+                              value=menu[key], fmt=fmt, on_change=setter(key), hint=hint))
+        elif key == "custom":
+            items.append(Item("Eigener Text", action="custom",
+                              right="%d gespeichert" % len(store.custom_texts),
+                              hint="Eigene Texte einfügen oder aus einer Datei laden."))
+        elif key == "stats":
+            items.append(Item("Statistik & Rekorde", action="stats",
+                              hint="Bestwerte, Verlauf, Durchschnitt und deine schwächsten Tasten."))
+        elif key == "activity":
+            items.append(Item("Aktivität", action="activity",
+                              hint="Kalender deiner Übungstage – wie auf GitHub."))
+        elif key == "achievements":
+            items.append(Item("Erfolge", action="achievements",
+                              right="%d/%d" % (len(store.achievements), len(stats.ACHIEVEMENTS)),
+                              hint="Abzeichen für Tempo, Genauigkeit und Ausdauer."))
+    items += [Item.sep(), Item("Zurück", action="back")]
     width = content_width(term)
-    cache = {}
-
-    def header():
-        w = content_width(term)
-        if cache.get("width") != w:
-            cache["width"], cache["lines"] = w, main_header(store, w)
-        lines = list(cache["lines"])
-        lines[0] = lines[0].replace(TITLE, ui.gradient(TITLE), 1)
-        return lines
-
+    has_options = any(it.options for it in items)
+    footer = ("↑↓ wählen · ←→ Länge/Stufe ändern · Enter starten · Esc zurück" if has_options
+              else "↑↓ wählen · Enter öffnen · Esc zurück")
     action, index, _ = run_menu(
-        term, header, items, index,
-        footer="↑↓ auswählen · ←→ ändern · Enter starten · Esc beenden", width=width)
+        term, lambda: title_block(CATEGORY_LABELS[category], width=width) + [""], items, index,
+        numbered=True, footer=footer, width=width)
     return action, index
 
 
 # --- Test-Ansicht -------------------------------------------------------------
 
-KEY_IDLE_BG = (38, 42, 50)
-KEY_IDLE_FG = (150, 156, 168)
+KEY_IDLE_FG = (110, 116, 128)
+KEY_HOME_FG = (170, 176, 188)   # F und J (Grundstellung)
 KEY_GLOW_A = (80, 220, 255)
 KEY_GLOW_B = (170, 120, 255)
 KEY_ERROR = (235, 70, 80)
@@ -148,16 +268,22 @@ def live_keyboard(lang, next_char, flash=None):
         parts = []
         for label, key_id, width in row:
             cap = label.center(width)
-            if key_id is None:
-                parts.append(" " * width)
-            elif key_id == error_key:
+            if key_id == error_key:
                 parts.append(ui.bg(KEY_ERROR) + Fore.WHITE + BRIGHT + cap + RESET)
             elif key_id in glow_keys:
                 parts.append(ui.bg(glow) + Fore.BLACK + BRIGHT + cap + RESET)
+            elif key_id == " ":
+                parts.append(DIM + "─" * width + RESET)
+            elif not label:
+                parts.append(" " * width)
             elif basic:
                 parts.append(DIM + cap + RESET)
+            elif key_id in ("f", "j"):
+                pad_l = (width - len(label)) // 2
+                parts.append(ui.fg(KEY_HOME_FG) + " " * pad_l + UNDERLINE + label + "\x1b[24m"
+                             + " " * (width - pad_l - len(label)) + RESET)
             else:
-                parts.append(ui.bg(KEY_IDLE_BG) + ui.fg(KEY_IDLE_FG) + cap + RESET)
+                parts.append(ui.fg(KEY_IDLE_FG) + cap + RESET)
         lines.append(" ".join(parts))
     return lines, hint
 

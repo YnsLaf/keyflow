@@ -71,17 +71,36 @@ class App:
             action, index = screens.main_menu(self.term, self.store, index)
             if action in (None, "quit"):
                 return
-            if action == "stats":
-                screens.stats_screen(self.term, self.store)
-            elif action == "activity":
-                screens.activity_screen(self.term, self.store)
-            elif action == "achievements":
-                screens.achievements_screen(self.term, self.store)
+            if action == "quick":
+                self.open(self.settings["menu"]["last"])
             elif action == "settings":
                 screens.settings_screen(self.term, self.store, on_look_change=self.apply_look)
-            elif action == "custom":
-                self.custom_texts()
-            elif action == "stories":
+            else:
+                self.category(action)
+
+    def category(self, category):
+        index = 0
+        while True:
+            action, index = screens.category_menu(self.term, self.store, category, index)
+            if action in (None, "back"):
+                return
+            self.open(action)
+
+    def open(self, action):
+        """Startet einen Modus oder öffnet einen Bildschirm."""
+        if action == "stats":
+            screens.stats_screen(self.term, self.store)
+        elif action == "activity":
+            screens.activity_screen(self.term, self.store)
+        elif action == "achievements":
+            screens.achievements_screen(self.term, self.store)
+        elif action == "custom":
+            self.custom_texts()
+        else:
+            if self.settings["menu"]["last"] != action:
+                self.settings["menu"]["last"] = action
+                self.store.save()
+            if action == "stories":
                 self.stories_menu()
             else:
                 self.run_mode(self.build_mode(action))
@@ -453,7 +472,7 @@ class App:
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="keyflow",
-                                     description="Keyflow – Tipptrainer für das Terminal.")
+                                     description="KeyFlow – Tipptrainer für das Terminal.")
     parser.add_argument("--daten", metavar="DATEI",
                         help="eigene Datendatei verwenden (Standard: ~/.keyflow/daten.json)")
     args = parser.parse_args(argv)

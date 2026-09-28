@@ -57,6 +57,8 @@ MENU_OPTIONS = {
     "mixed": [25, 50, 100],
     "quotes": ["random", "short", "medium", "long"],
     "weak": [25, 50, 100],
+    "last": ["time", "words", "free", "endless", "stories", "sentences", "numbers",
+             "symbols", "mixed", "quotes", "weak"],
 }
 
 MENU_DEFAULTS = {
@@ -71,6 +73,7 @@ MENU_DEFAULTS = {
     "mixed": 50,
     "quotes": "random",
     "weak": 25,
+    "last": "words",
 }
 
 
