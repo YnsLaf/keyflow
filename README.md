@@ -6,22 +6,9 @@ KeyFlow is a typing trainer for the terminal, written in Python. It runs on
 macOS, Linux and Windows and speaks **English and German**. On first start you
 choose the language of the whole tool.
 
-```
-K E Y F L O W  made by YnsLaf                              Streak 4 days
-Today 6.5/15 min ████░░░░░░░░          14 days ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■
-────────────────────────────────────────────────────────────────────────
-❯ 1  Continue: Word test · 25 words     ╭──────────────────────────╮
-  2  Practice                           │ 9 more min to your daily │
-  3  Texts & stories                    │ goal.                    │
-  4  Numbers & symbols                  ╰──┬───────────────────────╯
-  5  Progress                              ╵
-  6  Settings                             ╭───────╮
-  7  Quit                                 │ ◕   ◕ │
-                                          │   ‿   │
-                                          ╰─┬───┬─╯
-                                            ╵   ╵
-                                            Flow
-```
+<p align="center">
+  <img src="docs/screenshot.png" alt="KeyFlow main menu with Flow the mascot" width="760">
+</p>
 
 ## Installation
 
