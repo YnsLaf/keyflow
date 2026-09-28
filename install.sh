@@ -1,5 +1,5 @@
 #!/bin/sh
-# KeyFlow installer for macOS and Linux – made by yns.laf
+# KeyFlow installer for macOS and Linux – made by YnsLaf
 #
 # Installs everything KeyFlow needs:
 #   1. checks that Python 3.8+ is available

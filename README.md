@@ -1,13 +1,13 @@
 # KeyFlow
 
-*made by yns.laf*
+*made by YnsLaf*
 
 KeyFlow is a typing trainer for the terminal, written in Python. It runs on
 macOS, Linux and Windows and speaks **English and German**. On first start you
 choose the language of the whole tool.
 
 ```
-K E Y F L O W  made by yns.laf                             Streak 4 days
+K E Y F L O W  made by YnsLaf                              Streak 4 days
 Today 6.5/15 min ████░░░░░░░░          14 days ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■
 ────────────────────────────────────────────────────────────────────────
 ❯ 1  Continue: Word test · 25 words     ╭──────────────────────────╮
@@ -144,12 +144,29 @@ then use that language. You can change it any time in the settings.
 - **Moving colors:** flowing gradients, a shimmering menu and a pulsing next key.
 - **Flow**, the mascot, blinks, bobs and gives you tips.
 
+## Info & updates
+
+The **Info** page in the menu shows your KeyFlow version, whether an update is
+available, how KeyFlow was installed, your Python version and where your data is
+stored. It also has buttons that open GitHub and PyPI in your browser, and an
+**Update now** button that runs the right update command for you.
+
+On start KeyFlow asks PyPI in the background whether a newer version exists. If
+so, Flow tells you and the menu shows "Update!". You can turn this off in the
+settings (or set `KEYFLOW_NO_UPDATE_CHECK=1`).
+
+## About
+
+KeyFlow is made by **YnsLaf** – [github.com/YnsLaf](https://github.com/YnsLaf).
+Ideas, bugs or wishes? Open an issue on
+[github.com/YnsLaf/keyflow](https://github.com/YnsLaf/keyflow).
+
 ## Settings
 
 Language, text language, keyboard layout (QWERTZ/QWERTY), word length,
 punctuation, numbers, lowercase only, umlauts, strict mode, live WPM, cursor,
 visible lines, text width, sound, background, color mode, moving colors,
-keyboard while typing, daily goal, reset statistics.
+keyboard while typing, update check, daily goal, reset statistics.
 
 ## Data
 

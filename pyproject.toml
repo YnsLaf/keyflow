@@ -9,7 +9,7 @@ description = "KeyFlow – a typing trainer for the terminal (English & German):
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = ["colorama>=0.4.6"]
-authors = [{ name = "yns.laf" }]
+authors = [{ name = "YnsLaf" }]
 keywords = ["typing", "typing-trainer", "touch-typing", "wpm", "terminal", "tui", "keyboard", "tipptrainer"]
 classifiers = [
     "Programming Language :: Python :: 3",

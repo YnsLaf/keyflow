@@ -1,11 +1,13 @@
 """Alle Bildschirme: Hauptmenü, Test, Ergebnis, Statistik, Kalender, Erfolge …"""
 
+import platform
+import sys
 import time
 from datetime import date, timedelta
 
 from colorama import Back, Fore
 
-from . import keyboard, stats, storage, stories, ui
+from . import __version__, keyboard, stats, storage, stories, ui, updates
 from . import terminal as T
 from .i18n import pick, tr
 from .ui import (ACCENT, BAD, BRIGHT, DIM, GOLD, GOOD, RESET, REVERSE, TEXT,
@@ -103,7 +105,7 @@ def main_header(store, width):
     best = stats.best_entry(store.history)
     mode = store.settings["color_mode"]
 
-    title = TITLE + DIM + "  made by yns.laf" + RESET
+    title = TITLE + DIM + "  made by YnsLaf" + RESET
     info = tr("Serie", "Streak") + " %s%d %s%s" % (
         GOLD if current else DIM, current,
         tr("Tag", "day") if current == 1 else tr("Tage", "days"), RESET)
@@ -154,7 +156,10 @@ def quick_label(store):
 
 # --- Maskottchen ----------------------------------------------------------------
 
-def mascot_messages(store):
+def mascot_messages(store, updater=None):
+    if updater is not None and updater.available:
+        return [tr("Neue Version %s ist da! Schau unter Info.", "Version %s is out! Have a look at Info.")
+                % updater.latest] + mascot_messages(store)
     today = date.today()
     days = stats.daily_seconds(store.history)
     current, _ = stats.streaks(days, today)
@@ -230,7 +235,7 @@ def mascot(store, messages):
 
 # --- Hauptmenü --------------------------------------------------------------
 
-def main_menu(term, store, index=0):
+def main_menu(term, store, index=0, updater=None):
     items = [Item(tr("Weiter: ", "Continue: ") + quick_label(store), action="quick",
                   hint=tr("Startet sofort deinen zuletzt gespielten Modus.",
                           "Starts the mode you played last right away."))]
@@ -240,11 +245,15 @@ def main_menu(term, store, index=0):
         Item(tr("Einstellungen", "Settings"), action="settings",
              hint=tr("Sprache, Satzzeichen, Hintergrund, Tastatur, Tagesziel …",
                      "Language, punctuation, background, keyboard, daily goal …")),
+        Item("Info", action="info",
+             right=(GOLD + tr("Update!", "Update!") + RESET) if updater is not None and updater.available else "",
+             hint=tr("Version, Updates und alles über KeyFlow und YnsLaf.",
+                     "Version, updates and all about KeyFlow and YnsLaf.")),
         Item(tr("Beenden", "Quit"), action="quit", hint=tr("Bis bald!", "See you soon!")),
     ]
     width = content_width(term)
     cache = {}
-    messages = mascot_messages(store)
+    messages = mascot_messages(store, updater)
 
     def header():
         w = content_width(term)
@@ -256,8 +265,8 @@ def main_menu(term, store, index=0):
 
     action, index, _ = run_menu(
         term, header, items, index, numbered=True, side=lambda: mascot(store, messages),
-        side_col=40, footer=tr("↑↓ wählen · Enter öffnen · 1–7 direkt · Esc beenden",
-                               "↑↓ choose · Enter open · 1–7 direct · Esc quit"), width=width)
+        side_col=40, footer=tr("↑↓ wählen · Enter öffnen · 1–8 direkt · Esc beenden",
+                               "↑↓ choose · Enter open · 1–8 direct · Esc quit"), width=width)
     return action, index
 
 
@@ -952,6 +961,9 @@ def settings_ui():
         ("keyboard", tr("Tastatur beim Tippen", "Keyboard while typing"), on_off,
          tr("Zeigt unter dem Text eine Tastatur, auf der die nächste Taste leuchtet.",
             "Shows a keyboard under the text where the next key lights up.")),
+        ("check_updates", tr("Nach Updates suchen", "Check for updates"), on_off,
+         tr("Fragt beim Start bei PyPI nach, ob es eine neue Version gibt.",
+            "Asks PyPI on start whether a new version is available.")),
         None,
         ("daily_goal", tr("Tagesziel", "Daily goal"), lambda v: "%d min" % v,
          tr("Wie lange du pro Tag üben möchtest. Bestimmt auch die Kalenderfarben.",
@@ -1079,7 +1091,7 @@ def language_picker(term):
     width = content_width(term)
 
     def header():
-        return [ui.gradient(TITLE) + DIM + "  made by yns.laf" + RESET,
+        return [ui.gradient(TITLE) + DIM + "  made by YnsLaf" + RESET,
                 DIM + "─" * width + RESET, "",
                 BRIGHT + "Choose your language" + RESET + DIM + "  ·  " + RESET
                 + BRIGHT + "Wähle deine Sprache" + RESET, ""]
@@ -1089,3 +1101,79 @@ def language_picker(term):
                                 footer="↑↓ · Enter", width=width)
         if action in ("en", "de"):
             return action
+
+
+# --- Info -----------------------------------------------------------------------
+
+def update_status_line(updater):
+    status = updater.status if updater is not None else "off"
+    if status == "checking":
+        spinner = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"[int(time.monotonic() * 10) % 10]
+        return DIM + spinner + tr(" Suche nach Updates …", " Checking for updates …") + RESET
+    if status == "available":
+        return GOLD + tr("⬆ Update verfügbar: %s → %s", "⬆ Update available: %s → %s") % (
+            __version__, updater.latest) + RESET
+    if status == "current":
+        return GOOD + tr("✓ Du hast die neueste Version.", "✓ You have the latest version.") + RESET
+    if status == "unpublished":
+        return DIM + tr("Noch nicht auf PyPI veröffentlicht.", "Not published on PyPI yet.") + RESET
+    if status == "offline":
+        return WARN + tr("Update-Suche nicht möglich (offline?).", "Could not check for updates (offline?).") \
+            + RESET
+    return DIM + tr("Update-Suche ist ausgeschaltet.", "Update check is turned off.") + RESET
+
+
+def info_header(store, updater, width):
+    system = {"darwin": "macOS", "win32": "Windows"}.get(sys.platform, platform.system() or sys.platform)
+    method = {"pipx": "pipx", "pip": "pip", "source": tr("Quellcode (git)", "source code (git)")}[
+        updates.install_method()]
+    label_w = 14
+    rows = [
+        (tr("Version", "Version"), BRIGHT + "KeyFlow " + __version__ + RESET),
+        (tr("Updates", "Updates"), update_status_line(updater)),
+        (tr("Installiert", "Installed"), method + DIM + "  ·  " + tr("Update-Befehl: ", "update command: ")
+         + updates.update_command_text() + RESET),
+        ("Python", "%d.%d.%d" % sys.version_info[:3] + DIM + "  ·  " + system + RESET),
+        (tr("Daten", "Data"), DIM + str(store.path) + RESET),
+    ]
+    lines = title_block("Info", tr("alles über KeyFlow", "all about KeyFlow"), width)
+    lines += [DIM + pad(name, label_w) + RESET + value for name, value in rows]
+    lines += [
+        "",
+        BRIGHT + tr("Über mich", "About me") + RESET,
+        tr("KeyFlow wird von ", "KeyFlow is made by ") + ui.gradient("YnsLaf")
+        + tr(" gebaut – ein Tipptrainer, der", " – a typing trainer that is fun,"),
+        tr("direkt im Terminal Spaß macht. Ideen, Fehler oder Wünsche?",
+           "right in the terminal. Ideas, bugs or wishes?"),
+        tr("Schreib mir auf GitHub.", "Reach me on GitHub."),
+        "",
+        DIM + "GitHub  " + RESET + ACCENT + ui.link(updates.GITHUB_USER_URL, "github.com/YnsLaf") + RESET
+        + DIM + "   ·   " + RESET + ACCENT + ui.link(updates.GITHUB_REPO_URL, "github.com/YnsLaf/keyflow") + RESET,
+        DIM + "PyPI    " + RESET + ACCENT + ui.link(updates.PROJECT_URL, "pypi.org/project/keyflow-typing") + RESET,
+        "",
+    ]
+    return lines
+
+
+def info_screen(term, store, updater, index=0):
+    """Gibt die gewählte Aktion zurück: github, repo, pypi, update, check oder None."""
+    width = content_width(term)
+    available = updater is not None and updater.available
+    items = [
+        Item(tr("Mein GitHub öffnen", "Open my GitHub"), action="github",
+             hint=tr("Öffnet github.com/YnsLaf im Browser.", "Opens github.com/YnsLaf in your browser.")),
+        Item(tr("KeyFlow auf GitHub", "KeyFlow on GitHub"), action="repo",
+             hint=tr("Quellcode, Anleitung und Neuigkeiten.", "Source code, docs and news.")),
+        Item(tr("KeyFlow auf PyPI", "KeyFlow on PyPI"), action="pypi",
+             hint=tr("Die Paketseite mit allen Versionen.", "The package page with all versions.")),
+        Item(tr("Jetzt aktualisieren", "Update now") if available else tr("Nach Updates suchen", "Check for updates"),
+             action="update" if available else "check",
+             hint=(tr("Führt aus: ", "Runs: ") + updates.update_command_text()) if available
+             else tr("Fragt PyPI nach der neuesten Version.", "Asks PyPI for the latest version.")),
+        Item.sep(),
+        Item(tr("Zurück", "Back"), action="back"),
+    ]
+    action, index, _ = run_menu(term, lambda: info_header(store, updater, width), items, index,
+                                numbered=True, width=width,
+                                footer=tr("↑↓ wählen · Enter öffnen · Esc zurück", "↑↓ choose · Enter open · Esc back"))
+    return action, index

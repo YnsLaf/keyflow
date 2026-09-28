@@ -22,7 +22,8 @@ GOLD = Style.BRIGHT + Fore.YELLOW
 UNDERLINE = "\x1b[4m"
 REVERSE = "\x1b[7m"
 
-_ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+# Farbcodes (CSI) und anklickbare Links (OSC 8) zählen nicht zur sichtbaren Breite.
+_ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]|\x1b\]8;[^\x1b\x07]*(?:\x1b\\|\x07)")
 
 # Aktueller Farbmodus und ob sich Farben bewegen (wird aus den Einstellungen gesetzt).
 STYLE = {"color": "256", "animate": True}
@@ -31,7 +32,7 @@ STYLE = {"color": "256", "animate": True}
 # Deckkraft None = die Deckkraft des Terminal-Profils bleibt, wie sie ist.
 # "glas": Farbton 0°, Sättigung 0 %, Helligkeit 10 %, Deckkraft 30 %.
 BACKGROUNDS = {
-    "glas": (("Glas (yns.laf)", "Glass (yns.laf)"), (26, 26, 26), 0.30),
+    "glas": (("Glas (YnsLaf)", "Glass (YnsLaf)"), (26, 26, 26), 0.30),
     "mitternacht": (("Mitternacht", "Midnight"), (13, 17, 23), None),
     "graphit": (("Graphit", "Graphite"), (24, 24, 27), None),
     "ozean": (("Ozean", "Ocean"), (8, 24, 38), None),
@@ -147,6 +148,11 @@ def flow_line(width, fraction, speed=0.25):
 
 
 SOFT = "\x1b[38;5;250m"   # ruhiges Grau für nicht ausgewählte Einträge
+
+
+def link(url, text=None):
+    """Anklickbarer Link (in Terminals, die das können; sonst normaler Text)."""
+    return "\x1b]8;;%s\x1b\\%s\x1b]8;;\x1b\\" % (url, text or url)
 
 
 def strip_ansi(text):
