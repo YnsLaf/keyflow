@@ -48,6 +48,9 @@ pip install keyflow-typing
 keyflow
 ```
 
+On macOS the command is `pip3` (and `python3`). If `keyflow` is not found after
+`pip3 install --user keyflow-typing`, start it with `python3 -m keyflow`.
+
 On macOS, pipx is the cleanest way:
 
 ```bash
